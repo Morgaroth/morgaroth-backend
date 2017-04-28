@@ -11,6 +11,7 @@ val akkaHttp = "10.0.5"
 
 val commonSettings = Seq(
   scalaVersion := "2.12.2",
+  clippyColorsEnabled := true,
   libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor" % akka,
     Joda.Time.last,
