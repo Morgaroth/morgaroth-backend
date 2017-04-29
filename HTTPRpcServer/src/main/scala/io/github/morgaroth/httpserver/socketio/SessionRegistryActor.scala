@@ -32,8 +32,7 @@ class SessionRegistryActor(props: SocketIOSessionHandler) extends Actor with Act
               case SessionRegistryActor.Ping(key) => SessionRegistryActor.WrappedMessage(sid, key) // server should not send Ping
               case SessionRegistryActor.Message(text) => SessionRegistryActor.WrappedMessage(sid, text)
               case SessionRegistryActor.BroadcastOutgoingMessage(text, excludeMe) => SessionRegistryActor.WrappedBroadcastOutgoingMessage(sid, text, excludeMe)
-            }
-              .to(Sink.actorRef[SessionRegistryActor.ActorRegistryCommunicationWrappers](self, Disconnect(sid)))
+            }.to(Sink.actorRef[SessionRegistryActor.ActorRegistryCommunicationWrappers](self, Disconnect(sid)))
 
           val toActor = Source.actorRef[SessionRegistryActor.ActorRegistryCommunication](10, OverflowStrategy.fail)
             .mapMaterializedValue { out =>

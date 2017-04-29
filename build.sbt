@@ -93,10 +93,10 @@ val app = project.settings(commonSettings: _*)
   )
 
 val root = (project in file(".")).settings(commonSettings: _*)
-  .aggregate(app)
+  .dependsOn(app % "compile").aggregate(app)
   .enablePlugins(JavaAppPackaging, WindowsPlugin).settings(
   maintainer := "Mateusz Jaje <mateuszjaje@gmail.com",
+  mainClass in Compile := Some("io.github.morgaroth.app.App"),
   packageSummary := "GPBettingLeague",
-  packageDescription := "Automate app to bets on GP Betting League",
-  mappings in Windows := (mappings in Universal).value
+  packageDescription := "Automate app to bets on GP Betting League"
 )

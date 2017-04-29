@@ -1,0 +1,17 @@
+.idea
+app
+base
+GPBettingLeague
+GPBettingLeagueMacros
+HTTPRpcServer
+misc
+PhotoManager
+project
+SpotifyRipper
+.gitignore
+build.sbt
+.dockerignore
+target/scala-2.12
+target/resolution-cache
+target/streams
+target/universal/scripts
