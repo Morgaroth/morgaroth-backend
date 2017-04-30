@@ -10,14 +10,15 @@ ENV JAVA_VERSION_MAJOR=8 \
     JAVA_JCE=standard \
     JAVA_HOME=/opt/jdk \
     PATH=${PATH}:/opt/jdk/bin \
-    GLIBC_VERSION=2.23-r3 \
+    GLIBC_VERSION=2.25-r0 \
     LANG=C.UTF-8
 
+RUN apk add --update bash && rm -rf /var/cache/apk/*
 
 # do all in one step
 RUN set -ex && \
     apk upgrade --update && \
-    apk add --update libstdc++ curl ca-certificates bash && \
+    apk add --update libstdc++ curl ca-certificates && \
     for pkg in glibc-${GLIBC_VERSION} glibc-bin-${GLIBC_VERSION} glibc-i18n-${GLIBC_VERSION}; do curl -sSL https://github.com/andyshinn/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/${pkg}.apk -o /tmp/${pkg}.apk; done && \
     apk add --allow-untrusted /tmp/*.apk && \
     rm -v /tmp/*.apk && \
@@ -72,23 +73,25 @@ RUN set -ex && \
 
 # EOF
 
-ENV SBT_VERSION 0.13.15
-ENV SBT_HOME /usr/local/sbt
-ENV PATH ${PATH}:${SBT_HOME}/bin
+ENV SBT_VERSION=0.13.15 \
+    SBT_HOME=/usr/local/sbt \
+    PATH=${PATH}:${SBT_HOME}/bin
 
 # Install sbt
 RUN set -ex && \
     apk add --update curl ca-certificates && \
     curl -sL -o /tmp/sbt.tgz "http://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz" && \
     gunzip /tmp/sbt.tgz && \
-    tar -C /usr/local -xf /tmp/sbt.tgz && \
+    tar -C /usr/local -xf /tmp/sbt.tar && \
     apk del curl libcurl && \
-    echo -ne "- with sbt $SBT_VERSION\n" && \
-    rm -rf /tmp/* /var/cache/apk/*  >> /root/.built
+    echo -ne "- with sbt $SBT_VERSION\n"
+#    && \
+#    rm -rf /tmp/* /var/cache/apk/*  >> /root/.built
 
 COPY target/universal/stage/* /app/
 
 WORKDIR /app
 
-CMD [./morgarothserver]
+#CMD [./morgarothserver]
+CMD sleep 10000
 
