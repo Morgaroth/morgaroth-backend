@@ -73,25 +73,11 @@ RUN set -ex && \
 
 # EOF
 
-ENV SBT_VERSION=0.13.15 \
-    SBT_HOME=/usr/local/sbt \
-    PATH=${PATH}:${SBT_HOME}/bin
-
-# Install sbt
-RUN set -ex && \
-    apk add --update curl ca-certificates && \
-    curl -sL -o /tmp/sbt.tgz "http://dl.bintray.com/sbt/native-packages/sbt/$SBT_VERSION/sbt-$SBT_VERSION.tgz" && \
-    gunzip /tmp/sbt.tgz && \
-    tar -C /usr/local -xf /tmp/sbt.tar && \
-    apk del curl libcurl && \
-    echo -ne "- with sbt $SBT_VERSION\n"
-#    && \
-#    rm -rf /tmp/* /var/cache/apk/*  >> /root/.built
-
-COPY target/universal/stage/* /app/
+COPY target/universal/stage/ /app/
 
 WORKDIR /app
 
-#CMD [./morgarothserver]
-CMD sleep 10000
+EXPOSE 8080
+
+CMD ./bin/morgarothserver
 
