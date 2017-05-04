@@ -32,7 +32,7 @@ object Universal {
     "Swansea" -> (List("Swansea City"), List("Swansea")),
     "Termalica Nieciecza" -> (List("Termalica Nieciecza"), List("Termalica BB Nieciecza")),
     "West Ham" -> (List("West Ham United"), List("West Ham")),
-    "West Brom" -> (List("West Brom"), List("West Bromwich Albion")),
+    "West Brom" -> (List("West Bromwich Albion"), List("West Brom")),
     "Tottenham Hotspur" -> (List("Tottenham Hotspur"), List("Tottenham")),
   )
 
