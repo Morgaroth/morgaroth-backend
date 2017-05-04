@@ -10,8 +10,11 @@ object Universal {
   // universal name -> ( GP names, OC names )
   val data = Map(
     "Ajax Amsterdam" -> (List("Ajax Amsterdam"), List("Ajax")),
+    "AS Roma" -> (List("AS Roma"), List("Roma")),
+    "Atletico Madrid" ->(List("Atletico Madrid"), List("Atlético Madrid", "Atletico de Madrid")),
     "Betis" -> (List("Betis"), List("Real Betis")),
     "Bournemouth" -> (List("AFC Bournemouth"), List("Bournemouth")),
+    "Borussia Monchengladbach" -> (List("Borussia Moenchengladbach"), List("Borussia Monchengladbach")),
     "Cracovia" -> (List("Cracovia"), List("Cracovia Krakow")),
     "Genk" -> (List("Racing Genk"), List("Genk")),
     "Gijon" -> (List("Sporting Gijon"), List("Gijon")),
@@ -29,8 +32,8 @@ object Universal {
     "Swansea" -> (List("Swansea City"), List("Swansea")),
     "Termalica Nieciecza" -> (List("Termalica Nieciecza"), List("Termalica BB Nieciecza")),
     "West Ham" -> (List("West Ham United"), List("West Ham")),
+    "West Brom" -> (List("West Brom"), List("West Bromwich Albion")),
     "Tottenham Hotspur" -> (List("Tottenham Hotspur"), List("Tottenham")),
-    "AS Roma" -> (List("AS Roma"), List("Roma"))
   )
 
   val gpToUni = data.flatMap(x => x._2._1.map(_ -> x._1))
@@ -44,48 +47,15 @@ object Universal {
 
 case class GpMatch(hostsElem: WebElement, guestsElem: WebElement, start: DateTime, currentBetElem: WebElement) {
 
-//  import GpMatch.map
-
   def host = hostsElem.getText
 
   def guest = guestsElem.getText
-
-//  lazy val id = s"${map(host)}:${map(guest)}"
 
   lazy val uId = Universal.gpUid(this)
 
   def currentResult = currentBetElem.getText
 
   override def toString = s"GPMatch($host:$guest ($currentResult) ${start.toString("dd MMM HH:mm")})"
-}
-
-object GpMatch {
-//  def map(name: String) = mappings.getOrElse(name, name)
-
-//  //  GP --->>> OC
-//  val mappings = Map(
-//    "Legia Warszawa" -> "Legia Warsaw",
-//    "Termalica Nieciecza" -> "Termalica BB Nieciecza",
-//    "Cracovia" -> "Cracovia Krakow",
-//
-//    "Hamburger SV" -> "Hamburg",
-//    "Manchester United" -> "Man Utd",
-//    "Manchester City" -> "Man City",
-//    "FSV Mainz 05" -> "Mainz 05",
-//    "West Ham United" -> "West Ham",
-//    "Leicester City" -> "Leicester",
-//    "Inter Milan" -> "Inter",
-//    "AFC Bournemouth" -> "Bournemouth",
-//    "Sporting Gijon" -> "Gijon",
-//    "Racing Genk" -> "Genk",
-//    "Ajax Amsterdam" -> "Ajax",
-//    "FC Cologne" -> "FC Koln",
-//    "Hull City" -> "Hull",
-//    "Stoke City" -> "Stoke",
-//    "Swansea City" -> "Swansea",
-//    "Betis" -> "Real Betis",
-//    "" -> ""
-//  )
 }
 
 case class OCMatch(host: String, guest: String, hostBet: Double, drawBet: Double, guestBet: Double, start: DateTime) {
