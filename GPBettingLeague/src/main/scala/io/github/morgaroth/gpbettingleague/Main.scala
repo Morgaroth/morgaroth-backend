@@ -1,5 +1,6 @@
 package io.github.morgaroth.gpbettingleague
 
+import com.typesafe.config.{Config, ConfigFactory}
 import org.joda.time.{DateTime, Days, Minutes}
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
@@ -10,12 +11,12 @@ import scala.language.implicitConversions
 object Main {
 
   def main(args: Array[String]): Unit = {
-    run(args(0))
+    run(args(0), ConfigFactory.load().getConfig("gp-betting-league"))
   }
 
-  def run(password: String) {
-    println(s"running with $password")
-    System.setProperty("webdriver.chrome.driver", "C:/Users/PRV/projects/MorgarothServer/GPBettingLeague/chromedriver.exe")
+  def run(password: String, cfg: Config) {
+    println(s"running with $password and driver ${cfg.getString("driver-path")}")
+    System.setProperty("webdriver.chrome.driver", cfg.getString("driver-path"))
     implicit val driver: WebDriver = new ChromeDriver()
 
     val ocBets = oc.scrapMatches().map(x => x.uId -> x).toMap

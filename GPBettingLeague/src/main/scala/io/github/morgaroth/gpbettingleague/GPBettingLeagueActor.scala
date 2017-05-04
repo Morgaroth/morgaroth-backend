@@ -1,6 +1,7 @@
 package io.github.morgaroth.gpbettingleague
 
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import com.typesafe.config.ConfigFactory
 import io.github.morgaroth.base.{GPBettingCommands, LogPublisher, RunGPBettingLeague, ServiceManager}
 
 object GPBettingLeagueActor extends ServiceManager {
@@ -16,12 +17,12 @@ class GPBettingLeagueActor extends Actor with ActorLogging with LogPublisher {
 
   override def receive = {
     case RunGPBettingLeague(Some(password), _) =>
-      Main.run(password)
+      Main.run(password, ConfigFactory.load().getConfig("gp-betting-league"))
       lastPassword = Some(password)
       publishLog("Selections made.")
 
     case RunGPBettingLeague(_, Some(true)) if lastPassword.isDefined =>
-      lastPassword.foreach(Main.run)
+      lastPassword.foreach(Main.run(_, ConfigFactory.load().getConfig("gp-betting-league")))
       publishLog("Selections made using previous password.")
 
     case RunGPBettingLeague(_, Some(true)) if lastPassword.isEmpty =>
