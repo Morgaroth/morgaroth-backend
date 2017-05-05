@@ -7,15 +7,16 @@ scalaVersion := "2.12.2"
 
 val selenium = "3.3.1"
 val akka = "2.4.17"
-val akkaHttp = "10.0.5"
+val akkaHttp = "10.0.6"
+
+val AkkaActor = "com.typesafe.akka" %% "akka-actor" % akka
+val AkkaStream = "com.typesafe.akka" %% "akka-stream" % akka
 
 val commonSettings = Seq(
   scalaVersion := "2.12.2",
   clippyColorsEnabled := true,
   libraryDependencies ++= Seq(
-    "com.typesafe.akka" %% "akka-actor" % akka,
-    Joda.Time.last,
-    Joda.Convert.last
+    AkkaActor, Joda.Time.last, Joda.Convert.last
   )
 )
 
@@ -36,6 +37,11 @@ lazy val GPBettingLeagueMacros = project.settings(commonSettings: _*).settings(
 
 lazy val PhotoManager = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")
+  .settings(
+    libraryDependencies ++= Seq(
+      AkkaStream
+    )
+  )
 
 lazy val SpotifyRipper = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")

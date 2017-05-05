@@ -1,12 +1,16 @@
 package io.github.morgaroth.gpbettingleague
 
+import java.net.URL
+
 import com.typesafe.config.{Config, ConfigFactory}
 import org.joda.time.{DateTime, Days, Minutes}
-import org.openqa.selenium.WebDriver
+import org.openqa.selenium.{Platform, WebDriver}
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.support.ui.ExpectedConditions
 
 import scala.language.implicitConversions
+import org.openqa.selenium.remote.DesiredCapabilities
+import org.openqa.selenium.remote.RemoteWebDriver
 
 object Main {
 
@@ -15,10 +19,15 @@ object Main {
   }
 
   def run(password: String, cfg: Config) {
-    println(s"running with $password and driver ${cfg.getString("driver-path")}")
-    System.setProperty("webdriver.chrome.driver", cfg.getString("driver-path"))
-    implicit val driver: WebDriver = new ChromeDriver()
 
+    implicit val driver: WebDriver = if (cfg.hasPath("remote-server")) {
+      println(s"running with $password and remote server on ${cfg.getString("remote-server")}")
+      new RemoteWebDriver(new URL(cfg.getString("remote-server")), DesiredCapabilities.chrome)
+    } else {
+      println(s"running with $password and local driver ${cfg.getString("driver-path")}")
+      System.setProperty("webdriver.chrome.driver", cfg.getString("driver-path"))
+      new ChromeDriver()
+    }
     val ocBets = oc.scrapMatches().map(x => x.uId -> x).toMap
 
     gp.getActiveRounds(password).foreach { round =>

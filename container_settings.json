@@ -1,12 +1,15 @@
 {
   "AttachStdin": true,
   "OpenStdin": true,
+  "Env": [
+    "REMOTE_SELENIUM_SERVER=http://172.17.0.1:4444/wd/hub/"
+  ],
   "HostConfig": {
     "PortBindings": {
       "8080/tcp": [
         {
           "HostIp": "0.0.0.0",
-          "HostPort": "8090"
+          "HostPort": "8080"
         }
       ]
     }
