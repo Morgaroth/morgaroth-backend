@@ -8,7 +8,15 @@ import akka.actor.Actor
 trait LogPublisher {
   this: Actor =>
 
-  def logSourceName: String
+  def logSourceName: String = ???
 
-  def publishLog(message: String) = context.system.eventStream.publish(EventLog(logSourceName, message))
+  def publish(msg: AnyRef) = {
+    context.system.eventStream.publish(msg)
+  }
+
+  def publishLog(name: String, description: String) = {
+    publish(EventLog(name, description))
+  }
+
+  def publishLog(message: String) = publishLog(logSourceName, message)
 }
