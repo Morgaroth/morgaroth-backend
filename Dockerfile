@@ -73,6 +73,8 @@ RUN set -ex && \
 
 # EOF
 
+RUN apk add --update eudev && rm -rf /var/cache/apk/*
+
 COPY target/universal/stage/ /app/
 
 WORKDIR /app

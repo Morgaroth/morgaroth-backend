@@ -14,6 +14,8 @@ class PhotoManagerActor extends MorgarothActor {
 
   override def receive = {
     case PhotoPing(password) =>
-      publishLog("Photos", s"Confirmed with pass $password.")
+      publishLog(s"Confirmed with pass $password.")
   }
+
+  override def logSourceName = "Photos"
 }

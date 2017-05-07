@@ -1,6 +1,9 @@
 {
   "AttachStdin": true,
   "OpenStdin": true,
+  "Volumes": [
+    "/run:/media"
+  ],
   "Env": [
     "REMOTE_SELENIUM_SERVER=http://172.17.0.1:4444/wd/hub/"
   ],
