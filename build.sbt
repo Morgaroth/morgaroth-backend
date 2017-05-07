@@ -1,3 +1,4 @@
+import sbt.Keys.mappings
 
 name := "MorgarothServer"
 
@@ -8,9 +9,12 @@ scalaVersion := "2.12.2"
 val selenium = "3.3.1"
 val akka = "2.4.17"
 val akkaHttp = "10.0.6"
+val betterFilesVer = "3.0.0"
 
 val AkkaActor = "com.typesafe.akka" %% "akka-actor" % akka
 val AkkaStream = "com.typesafe.akka" %% "akka-stream" % akka
+val Json4s = "org.json4s" %% "json4s-native" % "3.5.1"
+val ScalaTest = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 
 val commonSettings = Seq(
   scalaVersion := "2.12.2",
@@ -20,34 +24,39 @@ val commonSettings = Seq(
   )
 )
 
-val base = project.settings(commonSettings: _*)
-
-val misc = project.settings(commonSettings: _*).dependsOn(base % "compile")
-
-lazy val GPBettingLeagueMacros = project.settings(commonSettings: _*).settings(
+lazy val macros = project.settings(commonSettings: _*).settings(
   libraryDependencies ++= Seq(
-    "com.propensive" %% "contextual" % "1.0.0"
+    "com.propensive" %% "contextual" % "1.0.0",
+    ScalaTest
   ),
-  name := "GP Betting League Macros",
-  scalaVersion := "2.12.2",
   version := "1.0",
   publish := {},
   publishLocal := {}
 )
 
+val base = project.settings(commonSettings: _*)
+  .dependsOn(macros % "compile")
+  .settings(
+    mappings in(Compile, packageBin) ++= mappings.in(macros, Compile, packageBin).value,
+    mappings in(Compile, packageSrc) ++= mappings.in(macros, Compile, packageSrc).value
+  )
+
+val misc = project.settings(commonSettings: _*).dependsOn(base % "compile")
+
 lazy val PhotoManager = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")
   .settings(
     libraryDependencies ++= Seq(
-      AkkaStream
+      AkkaStream, Json4s,
+      "com.github.pathikrit" %% "better-files" % betterFilesVer
     )
   )
 
-lazy val SpotifyRipper = project.settings(commonSettings: _*)
+lazy val SpotifyManager = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")
 
 lazy val GPBettingLeague = project.settings(commonSettings: _*)
-  .dependsOn(GPBettingLeagueMacros, base % "compile")
+  .dependsOn(macros, base % "compile")
   .settings(
     libraryDependencies ++= Seq(
       "org.seleniumhq.selenium" % "selenium-java" % selenium,
@@ -56,8 +65,8 @@ lazy val GPBettingLeague = project.settings(commonSettings: _*)
       "ru.yandex.qatools.ashot" % "ashot" % "1.5.3",
       "commons-io" % "commons-io" % "2.5"
     ),
-    mappings in(Compile, packageBin) ++= mappings.in(GPBettingLeagueMacros, Compile, packageBin).value,
-    mappings in(Compile, packageSrc) ++= mappings.in(GPBettingLeagueMacros, Compile, packageSrc).value,
+    mappings in(Compile, packageBin) ++= mappings.in(macros, Compile, packageBin).value,
+    mappings in(Compile, packageSrc) ++= mappings.in(macros, Compile, packageSrc).value,
     name := "GP Betting League",
     version := "1.0",
     initialCommands +=
@@ -79,12 +88,12 @@ lazy val GPBettingLeague = project.settings(commonSettings: _*)
   )
 
 val HTTPRpcServer = project.settings(commonSettings: _*)
-  .dependsOn(GPBettingLeagueMacros, GPBettingLeague % "compile", PhotoManager % "compile").settings(
+  .dependsOn(macros % "compile", GPBettingLeague % "compile", PhotoManager % "compile").settings(
   resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
   libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-http" % akkaHttp,
     "de.heikoseeberger" %% "akka-http-json4s" % "1.15.0",
-    "org.json4s" %% "json4s-native" % "3.5.1",
+    Json4s,
     "ch.megard" %% "akka-http-cors" % "0.1.11"
   )
 )
@@ -94,7 +103,8 @@ val app = project.settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
       "ch.qos.logback" % "logback-classic" % "1.1.6",
-      "com.typesafe.akka" %% "akka-slf4j" % akka
+      "com.typesafe.akka" %% "akka-slf4j" % akka,
+      "org.reflections" % "reflections" % "0.9.11"
     )
   )
 
