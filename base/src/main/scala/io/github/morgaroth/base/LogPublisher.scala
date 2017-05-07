@@ -14,9 +14,9 @@ trait LogPublisher {
     context.system.eventStream.publish(msg)
   }
 
-  def publishLog(name: String, description: String) = {
+  def publishLog(name: String, description: String): Unit = {
     publish(EventLog(name, description))
   }
 
-  def publishLog(message: String) = publishLog(logSourceName, message)
+  def publishLog(message: String): Unit = publishLog(logSourceName, message)
 }
