@@ -23,6 +23,7 @@
     <logger name="slick.jdbc.JdbcBackend.benchmark" level="${LOG_LEVEL:-WARN}"/>
     <logger name="slick.model" level="${LOG_LEVEL:-WARN}"/>
     <logger name="slick.basic" level="${LOG_LEVEL:-WARN}"/>
+    <logger name="org.reflections" level="${LOG_LEVEL:-WARN}"/>
 
     <root level="${LOG_LEVEL:-DEBUG}">
         <appender-ref ref="CONSOLE"/>
