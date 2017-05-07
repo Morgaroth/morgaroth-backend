@@ -3,7 +3,7 @@ package io.github.morgaroth.httpserver
 import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import io.github.morgaroth.base.{EventLog, PhotoPing, RunGPBettingLeague}
+import io.github.morgaroth.base._
 import io.github.morgaroth.httpserver.socketio.SessionRegistryActor.Message
 import io.github.morgaroth.httpserver.socketio.SocketIOSessionHandler
 import org.json4s.DefaultFormats
@@ -19,10 +19,12 @@ class WorkerActor(sessionId: UUID, socket: ActorRef) extends Actor with ActorLog
 
   implicit val f = DefaultFormats
 
-  val deserializers = Map(
-    "RunGpBettingLeague" -> implicitly[Manifest[RunGPBettingLeague]],
-    "PhotoPing" -> implicitly[Manifest[PhotoPing]],
-  )
+  //  val deserializers = Map(
+  //    "RunGpBettingLeague" -> implicitly[Manifest[RunGPBettingLeague]],
+  //    "PhotoPing" -> implicitly[Manifest[PhotoPing]],
+  //    "CheckConnectedDevices" -> implicitly[Manifest[CheckDevices]]
+  //  )
+  val deserializers = Cmds.commandManifests
 
   context.system.eventStream.subscribe(self, classOf[EventLog])
 
