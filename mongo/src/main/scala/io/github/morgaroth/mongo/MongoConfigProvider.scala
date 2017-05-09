@@ -44,7 +44,7 @@ class MongoConfigProvider(mongoUri: String) extends SimpleConfig {
       .collect[Set]()).map(_.map(_.getAs[String]("key").get))
 
   override def appendToStringArray(key: String, value: String) = {
-    col.flatMap(_.findAndUpdate(keyquery(key), BSONDocument("$set" -> BSONDocument("key" -> key), "$addToSet" -> BSONDocument("values" -> value))).flatMap(_ => getStringArray(key)))
+    col.flatMap(_.findAndUpdate(keyquery(key), BSONDocument("$set" -> BSONDocument("key" -> key), "$addToSet" -> BSONDocument("values" -> value)), upsert = true).flatMap(_ => getStringArray(key)))
   }
 
   override def getStringArray(key: String) = col.flatMap(_.find(keyquery(key)).requireOne[StringArray].map(_.values))

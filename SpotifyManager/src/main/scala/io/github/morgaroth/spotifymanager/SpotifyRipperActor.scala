@@ -12,9 +12,10 @@ object SpotifyRipperActor extends ServiceManager {
 class SpotifyRipperActor(ctx: ConfigProvider) extends Actor with ActorLogging with LogPublisher {
 
   import scala.sys.process._
-
   val fileNameFormat = "{track_name} - {artist} ({album}).{ext}"
   val keyFile = ""
+
+  implicit val s = context.system.dispatcher
 
   context.system.eventStream.subscribe(self, classOf[SpotifyRipperCommands])
   var lastCreds: Option[UserCredentials] = None
@@ -41,7 +42,7 @@ class SpotifyRipperActor(ctx: ConfigProvider) extends Actor with ActorLogging wi
 
     case e@AddUriToMaintain(uri: String) =>
       log.info(s"received command $e")
-      ctx.configProvider.appendToStringArray("spotify-ripper.stored-uris", uri)
+      ctx.configProvider.appendToStringArray("spotify-ripper.stored-uris", uri).onComplete(println(_))
       publishLog("Uri Saved.")
 
     case RipPlaylist(_, _) =>
