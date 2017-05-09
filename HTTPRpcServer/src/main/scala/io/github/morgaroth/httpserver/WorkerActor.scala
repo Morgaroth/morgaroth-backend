@@ -25,7 +25,7 @@ class WorkerActor(sessionId: UUID, socket: ActorRef) extends Actor with ActorLog
   //    "CheckConnectedDevices" -> implicitly[Manifest[CheckDevices]]
   //  )
   val deserializers = Cmds.commandManifests
-
+  log.info("deserializer initialized for classes: {}", deserializers.keySet)
   context.system.eventStream.subscribe(self, classOf[EventLog])
 
   def receive: Receive = {

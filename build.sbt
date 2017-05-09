@@ -1,4 +1,4 @@
-import sbt.Keys.mappings
+import sbt.Keys.{clean, mappings}
 
 name := "MorgarothServer"
 
@@ -15,6 +15,9 @@ val AkkaActor = "com.typesafe.akka" %% "akka-actor" % akka
 val AkkaStream = "com.typesafe.akka" %% "akka-stream" % akka
 val Json4s = "org.json4s" %% "json4s-native" % "3.5.1"
 val ScalaTest = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+val MongoDriver = "org.reactivemongo" %% "reactivemongo" % "0.12.3"
+
+def dep(p: Project) = p % "compile"
 
 val commonSettings = Seq(
   scalaVersion := "2.12.2",
@@ -55,6 +58,14 @@ lazy val PhotoManager = project.settings(commonSettings: _*)
 lazy val SpotifyManager = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")
 
+lazy val mongo = project.settings(commonSettings: _*)
+  .dependsOn(base % "compile")
+  .settings(
+    libraryDependencies ++= Seq(
+      MongoDriver
+    )
+  )
+
 lazy val GPBettingLeague = project.settings(commonSettings: _*)
   .dependsOn(macros, base % "compile")
   .settings(
@@ -88,18 +99,19 @@ lazy val GPBettingLeague = project.settings(commonSettings: _*)
   )
 
 val HTTPRpcServer = project.settings(commonSettings: _*)
-  .dependsOn(macros % "compile", GPBettingLeague % "compile", PhotoManager % "compile").settings(
-  resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
-  libraryDependencies ++= Seq(
-    "com.typesafe.akka" %% "akka-http" % akkaHttp,
-    "de.heikoseeberger" %% "akka-http-json4s" % "1.15.0",
-    Json4s,
-    "ch.megard" %% "akka-http-cors" % "0.1.11"
+  .dependsOn(macros % "compile", base % "compile")
+  .settings(
+    resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
+    libraryDependencies ++= Seq(
+      Json4s,
+      "com.typesafe.akka" %% "akka-http" % akkaHttp,
+      "de.heikoseeberger" %% "akka-http-json4s" % "1.15.0",
+      "ch.megard" %% "akka-http-cors" % "0.1.11"
+    )
   )
-)
 
 val app = project.settings(commonSettings: _*)
-  .dependsOn(HTTPRpcServer % "compile", base % "compile", misc % "compile")
+  .dependsOn(List(HTTPRpcServer, misc, mongo, SpotifyManager, GPBettingLeague, PhotoManager).map(dep): _*)
   .settings(
     libraryDependencies ++= Seq(
       "ch.qos.logback" % "logback-classic" % "1.1.6",
@@ -110,9 +122,21 @@ val app = project.settings(commonSettings: _*)
 
 val root = (project in file(".")).settings(commonSettings: _*)
   .dependsOn(app % "compile").aggregate(app)
-  .enablePlugins(JavaAppPackaging, WindowsPlugin).settings(
+  .enablePlugins(JavaAppPackaging, WindowsPlugin, DebianPlugin).settings(
   maintainer := "Mateusz Jaje <mateuszjaje@gmail.com",
   mainClass in Compile := Some("io.github.morgaroth.app.App"),
   packageSummary := "GPBettingLeague",
-  packageDescription := "Automate app to bets on GP Betting League"
+  packageDescription := "Automate app to bets on GP Betting League",
+  debianPackageDependencies in Debian ++= Seq("java-runtime-headless (>= 1.8)"),
+  clean := {
+    (clean in app).value
+    (clean in base).value
+    (clean in macros).value
+    (clean in misc).value
+    (clean in mongo).value
+    (clean in SpotifyManager).value
+    (clean in PhotoManager).value
+    (clean in GPBettingLeague).value
+    (clean in HTTPRpcServer).value
+  }
 )
