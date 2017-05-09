@@ -1,11 +1,11 @@
 package io.github.morgaroth.logwriter
 
-import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
-import io.github.morgaroth.base.{EventLog, PhotoManagerCommands, PhotoPing, ServiceManager}
+import akka.actor.{Actor, ActorLogging, Props}
+import io.github.morgaroth.base._
 
 object LogWriterActor extends ServiceManager {
-  override def initialize(system: ActorSystem) = {
-    system.actorOf(Props(new LogWriterActor))
+  override def initialize(ctx: MContext) = {
+    ctx.system.actorOf(Props(new LogWriterActor))
   }
 }
 

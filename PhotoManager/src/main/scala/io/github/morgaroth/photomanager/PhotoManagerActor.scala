@@ -1,11 +1,11 @@
 package io.github.morgaroth.photomanager
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.Props
 import io.github.morgaroth.base._
 
 object PhotoManagerActor extends ServiceManager {
-  override def initialize(system: ActorSystem) = {
-    system.actorOf(Props(new PhotoManagerActor))
+  override def initialize(ctx: MContext) = {
+    ctx.system.actorOf(Props(new PhotoManagerActor))
   }
 }
 

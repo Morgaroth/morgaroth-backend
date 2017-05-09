@@ -1,9 +1,8 @@
 package io.github.morgaroth.httpserver
 
-import akka.actor.{ActorLogging, ActorSystem, FSM, Props}
+import akka.actor.{ActorLogging, FSM, Props}
 import akka.http.scaladsl.Http
-import io.github.morgaroth.base
-import io.github.morgaroth.base.{EventLog, ServiceManager}
+import io.github.morgaroth.base.{EventLog, MContext, ServiceManager}
 import io.github.morgaroth.httpserver.HttpServerActor.{Data, State}
 
 import scala.concurrent.duration._
@@ -15,8 +14,8 @@ import scala.concurrent.{Await, Future}
 //@formatter:off
 object HttpServerActor extends ServiceManager {
 
-  def initialize(system: ActorSystem) = {
-    val ref = system.actorOf(Props(new HttpServerActor))
+  def initialize(ctx: MContext) = {
+    val ref = ctx.system.actorOf(Props(new HttpServerActor))
     ref ! Connect("0.0.0.0", 8080)
   }
 

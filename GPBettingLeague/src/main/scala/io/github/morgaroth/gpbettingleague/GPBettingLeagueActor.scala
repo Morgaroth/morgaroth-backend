@@ -1,12 +1,12 @@
 package io.github.morgaroth.gpbettingleague
 
-import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, Props}
 import com.typesafe.config.ConfigFactory
-import io.github.morgaroth.base.{GPBettingCommands, LogPublisher, RunGPBettingLeague, ServiceManager}
+import io.github.morgaroth.base._
 
 object GPBettingLeagueActor extends ServiceManager {
-  override def initialize(system: ActorSystem) = {
-    system.actorOf(Props(new GPBettingLeagueActor))
+  override def initialize(ctx: MContext) = {
+    ctx.system.actorOf(Props(new GPBettingLeagueActor))
   }
 }
 
