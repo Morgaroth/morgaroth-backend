@@ -27,9 +27,13 @@ case class CheckConnectedDevices() extends PhotoManagerCommands
 
 sealed trait SpotifyManagerCommands extends Commands
 
+sealed trait SpotifyRipperCommands extends SpotifyManagerCommands
+
 case class UserCredentials(user: String, password: String) extends SpotifyManagerCommands
 
-case class RipPlaylist(playlistUri: String, auth: Option[UserCredentials]) extends SpotifyManagerCommands
+case class RipPlaylist(playlistUri: String, auth: Option[UserCredentials]) extends SpotifyRipperCommands
+
+case class AddUriToMaintain(uri: String) extends SpotifyRipperCommands
 
 object Cmds {
   val commandManifests = SealedClasses.values[Commands]
