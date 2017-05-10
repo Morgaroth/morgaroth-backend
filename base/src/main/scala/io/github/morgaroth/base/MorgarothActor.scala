@@ -9,4 +9,9 @@ import akka.event.LoggingAdapter
 trait MorgarothActor extends Actor with ActorLogging with LogPublisher {
 
   implicit val implicitLogger: LoggingAdapter = log
+
+  def subscribe(channel: Class[_]) =
+    context.system.eventStream.subscribe(self, channel)
+
+  implicit val implicirExecContext = context.system.dispatcher
 }

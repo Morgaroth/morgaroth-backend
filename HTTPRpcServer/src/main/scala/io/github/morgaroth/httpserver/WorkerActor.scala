@@ -19,21 +19,15 @@ class WorkerActor(sessionId: UUID, socket: ActorRef) extends Actor with ActorLog
 
   implicit val f = DefaultFormats
 
-  //  val deserializers = Map(
-  //    "RunGpBettingLeague" -> implicitly[Manifest[RunGPBettingLeague]],
-  //    "PhotoPing" -> implicitly[Manifest[PhotoPing]],
-  //    "CheckConnectedDevices" -> implicitly[Manifest[CheckDevices]]
-  //  )
-  val deserializers = Cmds.commandManifests
-  log.info("deserializer initialized for classes: {}", deserializers.keySet)
-  context.system.eventStream.subscribe(self, classOf[EventLog])
+  context.system.eventStream.subscribe(self, classOf[SSE])
 
   def receive: Receive = {
-    case Command(name, args) if deserializers.contains(name) =>
-      val data = args.extract(f, deserializers(name))
-      context.system.eventStream.publish(data)
+    case Message(CommandBB(cmd)) =>
+      context.system.eventStream.publish(cmd)
     case e: EventLog =>
       socket ! Message(write(List("ServerEvent", e)))
+    case SSData(name, value) =>
+      socket ! Message(write(List(name, value)))
     case msg =>
       log.error(s"Worker received unknown $msg - $sender")
   }
