@@ -63,7 +63,7 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
     } yield ()
     case e@AddEntry(name, strDef, task) => for {
       _ <- ctx.cfg.appendToStringArray(jobsCfgKey, name)
-      _ <- ctx.cfg.put(jobCfgKey(name), CronEntry(strDef, task, name, None)).logErrors("Adding crontab entry {} end with error.", e).onComplete {
+      _ <- ctx.cfg.put(jobCfgKey(name), CronEntry(strDef, task, name, None)).logErrors("Adding crontab entry {} end with error.", e).whenCompleted {
         case Success(_) => publishLog(s"Crontab entry for $name added.")
         case Failure(thr) => publishLog(s"Adding crontab entry for $name failed with error ${thr.getMessage}.")
       }
@@ -74,7 +74,7 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
       for {
         prev <- findEntry(name)
         newValue = prev.copy(defString = strDef.getOrElse(prev.defString), command = task.getOrElse(prev.command))
-        _ <- ctx.cfg.put(jobCfgKey(name), newValue).logErrors("Updating crontab entry {} with updates {} end with error.", prev, e).logOut {
+        _ <- ctx.cfg.put(jobCfgKey(name), newValue).logErrors("Updating crontab entry {} with updates {} end with error.", prev, e).whenCompleted {
           case Success(_) => publishLog(s"Crontab entry for $name updated.")
           case Failure(thr) => publishLog(s"Updating crontab entry for $name failed with error ${thr.getMessage}.")
         }

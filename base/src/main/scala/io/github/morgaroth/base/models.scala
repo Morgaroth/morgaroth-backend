@@ -43,7 +43,9 @@ sealed trait SpotifyRipperCommands extends SpotifyManagerCommands
 
 case class UserCredentials(user: String, password: String) extends SpotifyManagerCommands
 
-case class RipPlaylist(playlistUri: String, auth: Option[UserCredentials]) extends SpotifyRipperCommands
+case class SaveCredentials(creds: UserCredentials) extends SpotifyRipperCommands
+
+case class RipUri(uri: String, auth: Option[UserCredentials]) extends SpotifyRipperCommands
 
 case class AddUriToMaintain(uri: String) extends SpotifyRipperCommands
 

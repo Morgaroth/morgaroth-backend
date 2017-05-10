@@ -32,7 +32,7 @@ case class RichFuture[T](f: Future[T]) {
     f
   }
 
-  def logOut(pf: PartialFunction[Try[T], Unit])(implicit log: LoggingAdapter, ex: ExecutionContext) = {
+  def whenCompleted(pf: PartialFunction[Try[T], Unit])(implicit log: LoggingAdapter, ex: ExecutionContext) = {
     f.onComplete(pf)
     f
   }

@@ -16,6 +16,7 @@ val AkkaStream = "com.typesafe.akka" %% "akka-stream" % akka
 val Json4s = "org.json4s" %% "json4s-native" % "3.5.1"
 val ScalaTest = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 val MongoDriver = "org.reactivemongo" %% "reactivemongo" % "0.12.3"
+val BetterFiles = "com.github.pathikrit" %% "better-files" % betterFilesVer
 
 def dep(p: Project) = p % "compile"
 
@@ -58,13 +59,15 @@ lazy val PhotoManager = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")
   .settings(
     libraryDependencies ++= Seq(
-      AkkaStream,
-      "com.github.pathikrit" %% "better-files" % betterFilesVer
+      AkkaStream, BetterFiles
     )
   )
 
 lazy val SpotifyManager = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")
+  .settings(
+    libraryDependencies += BetterFiles
+  )
 
 lazy val mongo = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")
