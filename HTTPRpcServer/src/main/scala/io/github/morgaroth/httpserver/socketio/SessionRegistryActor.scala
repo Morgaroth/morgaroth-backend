@@ -34,7 +34,7 @@ class SessionRegistryActor(props: SocketIOSessionHandler) extends Actor with Act
               case SessionRegistryActor.BroadcastOutgoingMessage(text, excludeMe) => SessionRegistryActor.WrappedBroadcastOutgoingMessage(sid, text, excludeMe)
             }.to(Sink.actorRef[SessionRegistryActor.ActorRegistryCommunicationWrappers](self, Disconnect(sid)))
 
-          val toActor = Source.actorRef[SessionRegistryActor.ActorRegistryCommunication](10, OverflowStrategy.fail)
+          val toActor = Source.actorRef[SessionRegistryActor.ActorRegistryCommunication](10000, OverflowStrategy.fail)
             .mapMaterializedValue { out =>
               val actor = context.actorOf(props.sessionHandler(sid, out))
               context.actorOf(Props(new Actor {

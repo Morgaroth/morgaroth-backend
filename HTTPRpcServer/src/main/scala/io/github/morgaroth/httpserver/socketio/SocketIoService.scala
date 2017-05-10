@@ -91,7 +91,7 @@ class SocketIoService(actorProps: SocketIOSessionHandler, prefix: String = "sock
       }.to(Sink.actorRef[SessionRegistryActor.IncomingMessage](socketActorRegistry, Disconnect(sid)))
 
     val outgoingMessages: Source[Message, NotUsed] =
-      Source.actorRef[SessionRegistryActor.OutgoingMessage](10, OverflowStrategy.fail)
+      Source.actorRef[SessionRegistryActor.OutgoingMessage](10000, OverflowStrategy.fail)
         .mapMaterializedValue { outActor =>
           socketActorRegistry ! UpdateOut(sid, outActor)
           sessionId match {
