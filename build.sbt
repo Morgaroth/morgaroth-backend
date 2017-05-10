@@ -40,17 +40,25 @@ lazy val macros = project.settings(commonSettings: _*).settings(
 val base = project.settings(commonSettings: _*)
   .dependsOn(macros % "compile")
   .settings(
+    libraryDependencies ++= Seq(
+      Json4s
+    ),
     mappings in(Compile, packageBin) ++= mappings.in(macros, Compile, packageBin).value,
     mappings in(Compile, packageSrc) ++= mappings.in(macros, Compile, packageSrc).value
   )
 
 val misc = project.settings(commonSettings: _*).dependsOn(base % "compile")
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.github.alonsodomin.cron4s" %% "cron4s-joda" % "0.4.0"
+    )
+  )
 
 lazy val PhotoManager = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")
   .settings(
     libraryDependencies ++= Seq(
-      AkkaStream, Json4s,
+      AkkaStream,
       "com.github.pathikrit" %% "better-files" % betterFilesVer
     )
   )
