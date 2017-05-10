@@ -11,7 +11,7 @@ trait BaseActorSystem {
 }
 
 trait ConfigProvider {
-  def configProvider: SimpleConfig
+  def cfg: SimpleConfig
 }
 
 trait MContext extends BaseActorSystem with ConfigProvider

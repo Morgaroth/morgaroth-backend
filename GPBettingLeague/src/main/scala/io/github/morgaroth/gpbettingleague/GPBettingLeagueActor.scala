@@ -10,8 +10,8 @@ object GPBettingLeagueActor extends ServiceManager {
   }
 }
 
-class GPBettingLeagueActor extends Actor with ActorLogging with LogPublisher {
-  context.system.eventStream.subscribe(self, classOf[GPBettingCommands])
+class GPBettingLeagueActor extends MorgarothActor {
+  subscribe(classOf[GPBettingCommands])
 
   var lastPassword: Option[String] = None
 

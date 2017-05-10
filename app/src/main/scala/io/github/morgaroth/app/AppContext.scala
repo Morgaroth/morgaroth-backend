@@ -7,7 +7,7 @@ import io.github.morgaroth.base.MContext
 import io.github.morgaroth.mongo.MongoConfigProvider
 
 class AppContext(val system: ActorSystem, config: Config) extends MContext {
-  val configProvider = new MongoConfigProvider(config.getString("mongo.uri"))
+  val cfg = new MongoConfigProvider(config.getString("mongo.uri"))
 
   def getLogger(name: String) = Logging(system, name)
 
