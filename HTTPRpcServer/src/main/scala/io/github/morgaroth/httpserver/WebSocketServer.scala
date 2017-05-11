@@ -3,7 +3,7 @@ package io.github.morgaroth.httpserver
 import akka.actor.{ActorLogging, FSM, Props}
 import akka.http.scaladsl.Http
 import io.github.morgaroth.base.{EventLog, MContext, ServiceManager}
-import io.github.morgaroth.httpserver.HttpServerActor.{Data, State}
+import io.github.morgaroth.httpserver.WebSocketServer.{Data, State}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -12,11 +12,11 @@ import scala.concurrent.{Await, Future}
   * Created by PRV on 23.04.2017.
   */
 //@formatter:off
-object HttpServerActor extends ServiceManager {
+object WebSocketServer extends ServiceManager {
 
   def initialize(ctx: MContext) = {
-    val ref = ctx.system.actorOf(Props(new HttpServerActor))
-    ref ! Connect("0.0.0.0", 8080)
+    val ref = ctx.system.actorOf(Props(new WebSocketServer))
+    ref ! Connect(ctx.staticCfg.getString("ws.interface"), ctx.staticCfg.getInt("ws.port"))
   }
 
   sealed trait State
@@ -33,14 +33,14 @@ object HttpServerActor extends ServiceManager {
 }
 //@formatter:on
 
-class HttpServerActor extends FSM[State, Data] with ActorLogging {
+class WebSocketServer extends FSM[State, Data] with ActorLogging {
 
   import context.dispatcher
-  import io.github.morgaroth.httpserver.HttpServerActor._
+  import io.github.morgaroth.httpserver.WebSocketServer._
 
   when(NotWorking) {
     case Event(Connect(interface, port), Uninitialized) =>
-      val api = new RpcServer()(context.system)
+      val api = new SocketIOServer()(context.system)
       val binding = api.bind(port, interface)
       context.system.eventStream.publish(EventLog("HTTPServer", s"Bound to $interface:$port."))
       goto(Working) using Initialized(interface, port, binding)

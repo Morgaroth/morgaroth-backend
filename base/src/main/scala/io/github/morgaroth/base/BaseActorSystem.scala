@@ -1,6 +1,7 @@
 package io.github.morgaroth.base
 
 import akka.actor.ActorSystem
+import com.typesafe.config.Config
 import io.github.morgaroth.base.configuration.SimpleConfig
 
 /**
@@ -12,6 +13,7 @@ trait BaseActorSystem {
 
 trait ConfigProvider {
   def cfg: SimpleConfig
+  def staticCfg: Config
 }
 
 trait MContext extends BaseActorSystem with ConfigProvider

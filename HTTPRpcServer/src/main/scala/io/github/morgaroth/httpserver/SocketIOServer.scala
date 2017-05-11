@@ -10,7 +10,7 @@ import io.github.morgaroth.httpserver.socketio.SocketIoService
 
 import scala.concurrent.Future
 
-class RpcServer(implicit sys: ActorSystem) {
+class SocketIOServer(implicit sys: ActorSystem) {
   implicit val mat = ActorMaterializer()
 
   private val service = new SocketIoService(WorkerActor)
@@ -20,7 +20,7 @@ class RpcServer(implicit sys: ActorSystem) {
 
   val corsSettings = CorsSettings.defaultSettings.copy(
     allowGenericHttpRequests = true,
-    allowedOrigins = HttpOriginRange(HttpOrigin("http://localhost:5000")),
+    allowedOrigins = HttpOriginRange(HttpOrigin("*")),
     allowedHeaders = HttpHeaderRange(headers: _*)
   )
 
