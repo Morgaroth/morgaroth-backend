@@ -6,7 +6,7 @@ import akka.event.LoggingAdapter
 /**
   * Created by PRV on 06.05.2017.
   */
-trait MorgarothActor extends Actor with ActorLogging with LogPublisher {
+trait MorgarothActor extends Actor with ActorLogging with MessagesPublisher {
 
   implicit val implicitLogger: LoggingAdapter = log
 

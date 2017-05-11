@@ -9,7 +9,7 @@ object SongsUpdaterActor extends ServiceManager {
   }
 }
 
-class SongsUpdaterActor extends Actor with ActorLogging with LogPublisher {
+class SongsUpdaterActor extends Actor with ActorLogging with MessagesPublisher {
   //  context.system.eventStream.subscribe(self, classOf[GPBettingCommands])
 
   //  var lastPassword: Option[String] = None

@@ -2,8 +2,8 @@ package io.github.morgaroth.mongo
 
 import io.github.morgaroth.base.FutureHelpers._
 import io.github.morgaroth.base.configuration.SimpleConfig
-import org.json4s.{DefaultFormats, Extraction}
 import org.json4s.JsonAST._
+import org.json4s.{DefaultFormats, Extraction}
 import reactivemongo.api.MongoDriver
 import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.bson.{BSONDocument, _}
@@ -71,12 +71,6 @@ class MongoConfigProvider(mongoUri: String) extends SimpleConfig {
     _.find(BSONDocument.empty, BSONDocument("key" -> 1)).cursor[BSONDocument]()
       .collect[Set]()).map(_.map(_.getAs[String]("key").get))
 
-  override def appendToStringArray(key: String, value: String) = {
-    col.flatMap(_.findAndUpdate(keyquery(key), BSONDocument("$set" -> BSONDocument("key" -> key), "$addToSet" -> BSONDocument("values" -> value)), upsert = true).flatMap(_ => getStringArray(key)))
-  }
-
-  override def getStringArray(key: String) = col.flatMap(_.find(keyquery(key)).requireOne[StringArray].map(_.values))
-
   implicit val f = DefaultFormats
 
   override def put[T <: AnyRef](key: String, value: T)(implicit m: Manifest[T]) = {
@@ -85,5 +79,19 @@ class MongoConfigProvider(mongoUri: String) extends SimpleConfig {
 
   override def get[T <: AnyRef](key: String)(implicit m: Manifest[T]) = {
     col.flatMap(_.find(keyquery(key)).requireOne[BSONDocument]).map(_.getTry("value").map(bson2json).map(_.extract[T])).flatMap(Future.fromTry)
+  }
+
+  override def remove(key: String): Future[Unit] = {
+    col.flatMap(_.remove(keyquery(key))).map(_ => ())
+  }
+
+  override def appendToStringArray(key: String, value: String) = {
+    col.flatMap(_.findAndUpdate(keyquery(key), BSONDocument("$set" -> BSONDocument("key" -> key), "$addToSet" -> BSONDocument("values" -> value)), upsert = true).flatMap(_ => getStringArray(key)))
+  }
+
+  override def getStringArray(key: String) = col.flatMap(_.find(keyquery(key)).requireOne[StringArray].map(_.values))
+
+  override def removeFromStringArray(key: String, value: String): Future[Unit] = {
+    col.flatMap(_.findAndUpdate(keyquery(key), BSONDocument("$pull" -> BSONDocument("values" -> value))).map(_ => ()))
   }
 }

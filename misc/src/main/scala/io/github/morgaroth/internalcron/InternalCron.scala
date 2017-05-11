@@ -64,15 +64,22 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
       log.debug("Got {} command", e)
       for {
         _ <- ctx.cfg.appendToStringArray(jobsCfgKey, name)
-        _ <- ctx.cfg.put(jobCfgKey(name), CronEntry(strDef, task, name, None)).logErrors("Adding crontab entry {} end with error.", e).whenCompleted {
+        entry: CronEntry = CronEntry(strDef, task, name, None)
+        _ <- ctx.cfg.put(jobCfgKey(name), entry).logErrors("Adding crontab entry {} end with error.", e).whenCompleted {
           case Success(_) => publishLog(s"Crontab entry for $name added.")
           case Failure(thr) => publishLog(s"Adding crontab entry for $name failed with error ${thr.getMessage}.")
         }
+        _ = sendToClient("CrontabEntryAdded")
       } yield ()
     case UpdateEntry(name, None, None) =>
       log.warning(s"No updates in update request for crontab entry $name")
-    case RemoveEntry(_) =>
-      publishLog("Removing cron entry not implemented")
+    case c@RemoveEntry(name) =>
+      log.debug("Got request {}", c)
+      for {
+        _ <- ctx.cfg.removeFromStringArray(jobsCfgKey, name)
+        _ <- ctx.cfg.remove(jobCfgKey(name))
+        _ = sendToClient("CrontabEntryRemoved")
+      } yield ()
     case e@UpdateEntry(name, strDef, task) =>
       for {
         prev <- findEntry(name)
@@ -83,8 +90,10 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
         }
       } yield ()
     case GetEntries =>
-      ctx.cfg.getStringArray(jobsCfgKey).map(entries => future(entries.map(findEntry))).map { entries =>
-        publish(SSData("CrontabEntries", entries))
+      ctx.cfg.getStringArray(jobsCfgKey).flatMap(entries => future(entries.map(findEntry))).map { entries =>
+        sendToClient("CrontabEntries", entries)
       }
   }
+
+  override val logSourceName = "Cron"
 }
