@@ -17,6 +17,8 @@ object FutureHelpers {
 
   def future[T](value: Try[T]): Future[T] = Future.fromTry(value)
 
+  def future[T](value: Set[Future[T]])(implicit du: DummyImplicit, ex: ExecutionContext): Future[Set[T]] = Future.sequence(value)
+
   def succ[T](value: T): Future[T] = Future.successful(value)
 
   def fail[T](value: Throwable): Future[T] = Future.failed[T](value)

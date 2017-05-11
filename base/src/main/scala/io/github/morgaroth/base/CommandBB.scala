@@ -8,8 +8,13 @@ object Command {
   implicit val formats = DefaultFormats
 
   def unapply(arg: String): Option[(String, JValue)] = {
-    val (JString(name) :: value :: Nil) = read[JArray](arg).arr
-    Some((name, value))
+    try {
+      val arr = read[JArray](arg).arr
+      val (JString(name) :: value :: Nil) = arr
+      Some((name, value))
+    } catch {
+      case _: Throwable => None
+    }
   }
 }
 

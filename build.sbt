@@ -42,7 +42,7 @@ val base = project.settings(commonSettings: _*)
   .dependsOn(macros % "compile")
   .settings(
     libraryDependencies ++= Seq(
-      Json4s
+      Json4s, ScalaTest
     ),
     mappings in(Compile, packageBin) ++= mappings.in(macros, Compile, packageBin).value,
     mappings in(Compile, packageSrc) ++= mappings.in(macros, Compile, packageSrc).value
@@ -131,6 +131,8 @@ val app = project.settings(commonSettings: _*)
     )
   )
 
+val cleanAll = taskKey[Unit]("Cleans entire project.")
+
 val root = (project in file(".")).settings(commonSettings: _*)
   .dependsOn(app % "compile").aggregate(app)
   .enablePlugins(JavaAppPackaging, WindowsPlugin, DebianPlugin).settings(
@@ -139,7 +141,8 @@ val root = (project in file(".")).settings(commonSettings: _*)
   packageSummary := "GPBettingLeague",
   packageDescription := "Automate app to bets on GP Betting League",
   debianPackageDependencies in Debian ++= Seq("java-runtime-headless (>= 1.8)"),
-  clean := {
+  cleanAll := {
+    clean.value
     (clean in app).value
     (clean in base).value
     (clean in macros).value

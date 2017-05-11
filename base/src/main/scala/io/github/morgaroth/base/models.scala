@@ -17,6 +17,9 @@ sealed trait Commands {
   def name: String = getClass.getSimpleName
 }
 
+/** Internal models */
+case object GetCommandsList extends Commands
+
 /** GPBettingLeague models */
 
 sealed trait GPBettingCommands extends Commands
@@ -24,8 +27,7 @@ sealed trait GPBettingCommands extends Commands
 case class RunGPBettingLeague(
                                password: Option[String] = None,
                                usePrevious: Option[Boolean] = None
-                             ) extends GPBettingCommands {
-}
+                             ) extends GPBettingCommands
 
 /** Photo Manager models */
 
@@ -56,6 +58,8 @@ sealed trait CronCommands extends Commands
 case object GetEntries extends CronCommands
 
 case class AddEntry(jobName: String, defStr: String, cmd: String) extends CronCommands
+
+case class RemoveEntry(jobName: String) extends CronCommands
 
 case class UpdateEntry(jobName: String, defStr: Option[String] = None, cmd: Option[String] = None) extends CronCommands
 

@@ -31,11 +31,10 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
 
   subscribe(classOf[CronCommands])
 
-  val futureSelf = self
   ctx.cfg.getStringArray(jobsCfgKey).recover {
     case _: NoSuchElementException => log.info("No jobs in crontab."); Nil
   }.onComplete {
-    case Success(keys) => keys.foreach { cmd => futureSelf ! Check(cmd) }
+    case Success(keys) => keys.foreach { cmd => selfie ! Check(jobCfgKey(cmd)) }
     case Failure(thr) => log.error(thr, "Requesting all jobs from configuration end with exception {}", thr.getMessage)
   }
 
@@ -61,15 +60,19 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
         }
       } else future(None)
     } yield ()
-    case e@AddEntry(name, strDef, task) => for {
-      _ <- ctx.cfg.appendToStringArray(jobsCfgKey, name)
-      _ <- ctx.cfg.put(jobCfgKey(name), CronEntry(strDef, task, name, None)).logErrors("Adding crontab entry {} end with error.", e).whenCompleted {
-        case Success(_) => publishLog(s"Crontab entry for $name added.")
-        case Failure(thr) => publishLog(s"Adding crontab entry for $name failed with error ${thr.getMessage}.")
-      }
-    } yield ()
+    case e@AddEntry(name, strDef, task) =>
+      log.debug("Got {} command", e)
+      for {
+        _ <- ctx.cfg.appendToStringArray(jobsCfgKey, name)
+        _ <- ctx.cfg.put(jobCfgKey(name), CronEntry(strDef, task, name, None)).logErrors("Adding crontab entry {} end with error.", e).whenCompleted {
+          case Success(_) => publishLog(s"Crontab entry for $name added.")
+          case Failure(thr) => publishLog(s"Adding crontab entry for $name failed with error ${thr.getMessage}.")
+        }
+      } yield ()
     case UpdateEntry(name, None, None) =>
       log.warning(s"No updates in update request for crontab entry $name")
+    case RemoveEntry(_) =>
+      publishLog("Removing cron entry not implemented")
     case e@UpdateEntry(name, strDef, task) =>
       for {
         prev <- findEntry(name)
@@ -80,7 +83,7 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
         }
       } yield ()
     case GetEntries =>
-      ctx.cfg.getStringArray(jobsCfgKey).map { entries =>
+      ctx.cfg.getStringArray(jobsCfgKey).map(entries => future(entries.map(findEntry))).map { entries =>
         publish(SSData("CrontabEntries", entries))
       }
   }
