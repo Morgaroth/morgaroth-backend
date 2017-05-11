@@ -22,14 +22,14 @@ private class UDevAdmMonitor extends MorgarothActor {
   implicit val mat = ActorMaterializer()
 
   Source("/sbin/udevadm monitor --udev".lineStream_!)
-//    .log("received line from udev")
+    //    .log("received line from udev")
     .throttle(1, 5.seconds, 1, ThrottleMode.Shaping)
     .to(Sink.actorRef(self, NotUsed))
     .run()
 
   override def receive = {
     case line: String =>
-//      log.info(s"received from udev $line")
+      //      log.info(s"received from udev $line")
       context.parent ! CheckConnectedDevices()
   }
 }
@@ -46,7 +46,7 @@ class PhonePhotosFetcher(ctx: ConfigProvider) extends MorgarothActor {
   override def receive = {
     case CheckConnectedDevices() =>
       val dirs = file"/run/user/" glob "*mtp*"
-      println(dirs.map(_.path).mkString("\n"))
+      if (dirs.nonEmpty) println(dirs.map(_.path).mkString("\n"))
   }
 
   override def logSourceName = "Photos"
