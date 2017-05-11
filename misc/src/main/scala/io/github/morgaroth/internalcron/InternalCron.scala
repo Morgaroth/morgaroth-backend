@@ -8,8 +8,10 @@ import cron4s.lib.joda._
 import io.github.morgaroth.base.FutureHelpers._
 import io.github.morgaroth.base._
 import io.github.morgaroth.internalcron.InternalCron.{Check, jobCfgKey, jobsCfgKey}
+import org.joda.time
 import org.joda.time.DateTime
 
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 object InternalCron extends ServiceManager {
@@ -48,7 +50,8 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
     case Check(jobId) => for {
       job <- getEntry(jobId)
       nextRun = Cron.unsafeParse(job.defString).next(job.lastRun.getOrElse(startOfTime)).get
-      _ <- if (nextRun.isBeforeNow) {
+      val minutesToNextRun = time.Minutes.minutesBetween(DateTime.now, nextRun).getMinutes
+      _ <- if (minutesToNextRun <= 0) {
         CommandBB.interpret(job.command).map { cmd =>
           publish(cmd)
           publishLog(s"Job ${job.name} started.")
@@ -58,7 +61,10 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
           log.warning("job {} wasn't parsed correctly.", job)
           future(None)
         }
-      } else future(None)
+      } else {
+        context.system.scheduler.scheduleOnce(minutesToNextRun.minutes, self, Check(jobId))
+        future(None)
+      }
     } yield ()
     case e@AddEntry(name, strDef, task) =>
       log.debug("Got {} command", e)
@@ -69,6 +75,7 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
           case Success(_) => publishLog(s"Crontab entry for $name added.")
           case Failure(thr) => publishLog(s"Adding crontab entry for $name failed with error ${thr.getMessage}.")
         }
+        _ = selfie ! Check(jobCfgKey(name))
         _ = sendToClient("CrontabEntryAdded")
       } yield ()
     case UpdateEntry(name, None, None) =>

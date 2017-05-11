@@ -13,5 +13,5 @@ class AppContext(val system: ActorSystem, config: Config) extends MContext {
 
   def getLogger(caller: Any) = Logging(system, caller.getClass.getCanonicalName.stripSuffix("$"))
 
-  override def staticCfg = config
+  def staticCfg = config
 }

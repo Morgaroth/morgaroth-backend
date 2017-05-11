@@ -51,6 +51,7 @@ val base = project.settings(commonSettings: _*)
 val misc = project.settings(commonSettings: _*).dependsOn(base % "compile")
   .settings(
     libraryDependencies ++= Seq(
+      ScalaTest,
       "com.github.alonsodomin.cron4s" %% "cron4s-joda" % "0.4.0"
     )
   )
