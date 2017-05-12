@@ -20,7 +20,7 @@ class SocketIOServer(implicit sys: ActorSystem) {
 
   val corsSettings = CorsSettings.defaultSettings.copy(
     allowGenericHttpRequests = true,
-    allowedOrigins = HttpOriginRange(HttpOrigin("*")),
+    allowedOrigins = HttpOriginRange.*,
     allowedHeaders = HttpHeaderRange(headers: _*)
   )
 
