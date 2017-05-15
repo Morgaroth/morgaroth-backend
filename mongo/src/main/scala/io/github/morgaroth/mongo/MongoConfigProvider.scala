@@ -2,6 +2,7 @@ package io.github.morgaroth.mongo
 
 import io.github.morgaroth.base.FutureHelpers._
 import io.github.morgaroth.base.configuration.SimpleConfig
+import org.joda.time.DateTime
 import org.json4s.JsonAST._
 import org.json4s.{DefaultFormats, Extraction}
 import reactivemongo.api.MongoDriver
@@ -54,6 +55,10 @@ class MongoConfigProvider(mongoUri: String) extends SimpleConfig {
   implicit val stringHandler = Macros.handler[StringValue]
   implicit val stringArrHandler = Macros.handler[StringArray]
   implicit val intHandler = Macros.handler[IntValue]
+  implicit object BSONDateTimeHandler extends BSONHandler[BSONDateTime, DateTime] {
+    def read(time: BSONDateTime) = new DateTime(time.value)
+    def write(jdtime: DateTime) = BSONDateTime(jdtime.getMillis)
+  }
 
   override def getString(key: String) = {
     col.flatMap(_.find(keyquery(key)).requireOne[StringValue]).map(_.value)

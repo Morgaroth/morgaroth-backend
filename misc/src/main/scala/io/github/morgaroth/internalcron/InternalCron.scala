@@ -47,25 +47,29 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
   val startOfTime = DateTime.now.withMillis(0L)
 
   override def receive = {
-    case Check(jobId) => for {
-      job <- getEntry(jobId)
-      nextRun = Cron.unsafeParse(job.defString).next(job.lastRun.getOrElse(startOfTime)).get
-      val minutesToNextRun = time.Minutes.minutesBetween(DateTime.now, nextRun).getMinutes
-      _ <- if (minutesToNextRun <= 0) {
-        CommandBB.interpret(job.command).map { cmd =>
-          publish(cmd)
-          publishLog(s"Job ${job.name} started.")
-          val updatedValue = job.copy(lastRun = Some(DateTime.now))
-          ctx.cfg.put(jobId, updatedValue).map(Some(_)).logErrors("Updating config entry for {} end with error. (new value: {})", jobId, updatedValue)
-        }.getOrElse {
-          log.warning("job {} wasn't parsed correctly.", job)
+    case Check(jobId) =>
+      log.debug(s"Checking job $jobId")
+      (for {
+        job <- getEntry(jobId)
+        nextRun = Cron.unsafeParse(job.defString).next(job.lastRun.getOrElse(startOfTime)).get
+        minutesToNextRun = time.Minutes.minutesBetween(DateTime.now, nextRun).getMinutes
+        _ <- if (minutesToNextRun <= 0) {
+          CommandBB.interpret(job.command).map { cmd =>
+            publish(cmd)
+            publishLog(s"Job ${job.name} started.")
+            val updatedValue = job.copy(lastRun = Some(DateTime.now))
+            ctx.cfg.put(jobId, updatedValue).map(Some(_)).logErrors("Updating config entry for {} end with error. (new value: {})", jobId, updatedValue)
+          }.getOrElse {
+            log.warning("job {} wasn't parsed correctly.", job)
+            future(None)
+          }
+        } else {
+          val delay = minutesToNextRun.minutes
+          log.debug(s"Scheduling job ${job.name} in $delay.")
+          context.system.scheduler.scheduleOnce(delay, self, Check(jobId))
           future(None)
         }
-      } else {
-        context.system.scheduler.scheduleOnce(minutesToNextRun.minutes, self, Check(jobId))
-        future(None)
-      }
-    } yield ()
+      } yield ()).logErrors("fds")
     case e@AddEntry(name, strDef, task) =>
       log.debug("Got {} command", e)
       for {

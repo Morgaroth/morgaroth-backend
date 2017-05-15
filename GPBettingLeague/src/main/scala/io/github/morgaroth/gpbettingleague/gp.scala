@@ -1,5 +1,6 @@
 package io.github.morgaroth.gpbettingleague
 
+import io.github.morgaroth.base.UserCredentials
 import io.github.morgaroth.gpbettingleague.xpath._
 import org.joda.time.{DateTime, LocalTime}
 import org.openqa.selenium.By
@@ -9,20 +10,19 @@ import scala.util.Try
 
 object gp extends Selenium {
 
-  def loginIfNeeded(password:String)(implicit wd: Driver) = {
+  def loginToGPBettingLeague(creds: UserCredentials)(implicit wd: Driver) = {
+    go to "http://bettingleaguegp.appspot.com"
     if (currentUrl == "http://bettingleaguegp.appspot.com/login.jsp") {
-      val login = findElement(By.name("login"))
-      val pass = findElement(By.name("password"))
-      login.sendKeys("mateusz.jaje")
-      pass.sendKeys(password)
-      login.submit()
+      val loginInput = findElement(By.name("login"))
+      val passInput = findElement(By.name("password"))
+      loginInput.sendKeys(creds.user)
+      passInput.sendKeys(creds.password)
+      loginInput.submit()
     }
   }
 
-  def getActiveRounds(password:String)(implicit driver: Driver) = {
+  def getActiveRounds()(implicit driver: Driver) = {
     import scala.collection.JavaConverters._
-    go to "http://bettingleaguegp.appspot.com"
-    loginIfNeeded(password)
     driver.until(ExpectedConditions.not(ExpectedConditions.textToBePresentInElementLocated(By.id("side-menu-running"), "Loading...")))
     findElement(By.id("side-menu-running"))
       .findElements(x".//a[starts-with(@href, 'round.jsp')]")

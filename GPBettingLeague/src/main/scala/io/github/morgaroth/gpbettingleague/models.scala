@@ -12,6 +12,7 @@ object Universal {
     "Ajax Amsterdam" -> (List("Ajax Amsterdam"), List("Ajax")),
     "AS Roma" -> (List("AS Roma"), List("Roma")),
     "Atletico Madrid" ->(List("Atletico Madrid"), List("Atlético Madrid", "Atletico de Madrid")),
+    "Bastia" -> (List("SC Bastia"), List("Bastia")),
     "Betis" -> (List("Betis"), List("Real Betis")),
     "Bournemouth" -> (List("AFC Bournemouth"), List("Bournemouth")),
     "Borussia Monchengladbach" -> (List("Borussia Moenchengladbach"), List("Borussia Monchengladbach")),

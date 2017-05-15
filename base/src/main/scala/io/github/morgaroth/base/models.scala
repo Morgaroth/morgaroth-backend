@@ -7,6 +7,8 @@ import org.joda.time.DateTime
 
 class Subscribe(eventName: String, manifest: Manifest[_])
 
+case class UserCredentials(user: String, password: String)
+
 sealed trait SSE
 
 case class EventLog(source: String, message: String, ts: DateTime = DateTime.now) extends SSE
@@ -25,9 +27,14 @@ case object GetCommandsList extends Commands
 sealed trait GPBettingCommands extends Commands
 
 case class RunGPBettingLeague(
-                               password: Option[String] = None,
-                               usePrevious: Option[Boolean] = None
+                               credentials: Option[UserCredentials] = None,
+                               usePrevious: Option[Boolean] = None,
+                               newerThan: Option[DateTime] = None,
                              ) extends GPBettingCommands
+
+case object RunGPBettingLeagueTomorrowPreviousPass extends GPBettingCommands
+
+case class SaveGPCredentials(creds: UserCredentials) extends GPBettingCommands
 
 /** Photo Manager models */
 
@@ -43,9 +50,7 @@ sealed trait SpotifyManagerCommands extends Commands
 
 sealed trait SpotifyRipperCommands extends SpotifyManagerCommands
 
-case class UserCredentials(user: String, password: String) extends SpotifyManagerCommands
-
-case class SaveCredentials(creds: UserCredentials) extends SpotifyRipperCommands
+case class SaveSpotifyCredentials(creds: UserCredentials) extends SpotifyRipperCommands
 
 case class RipUri(uri: String, auth: Option[UserCredentials]) extends SpotifyRipperCommands
 

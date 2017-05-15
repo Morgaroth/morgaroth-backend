@@ -1,8 +1,9 @@
 package io.github.morgaroth.gpbettingleague
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.Props
 import com.typesafe.config.ConfigFactory
 import io.github.morgaroth.base._
+import org.joda.time.DateTime
 
 object GPBettingLeagueActor extends ServiceManager {
   override def initialize(ctx: MContext) = {
@@ -13,20 +14,38 @@ object GPBettingLeagueActor extends ServiceManager {
 class GPBettingLeagueActor extends MorgarothActor {
   subscribe(classOf[GPBettingCommands])
 
-  var lastPassword: Option[String] = None
+  var creds: Option[UserCredentials] = None
+
+  val cfg = ConfigFactory.load().getConfig("gp-betting-league")
+
+  val runner = new Main(cfg)
 
   override def receive = {
-    case RunGPBettingLeague(Some(password), _) =>
-      Main.run(password, ConfigFactory.load().getConfig("gp-betting-league"))
-      lastPassword = Some(password)
+    case RunGPBettingLeague(Some(credentials: UserCredentials), _, timeBarrier) =>
+      runner.run(credentials, timeBarrier)
+      creds = Some(credentials)
       publishLog("Selections made.")
 
-    case RunGPBettingLeague(_, Some(true)) if lastPassword.isDefined =>
-      lastPassword.foreach(Main.run(_, ConfigFactory.load().getConfig("gp-betting-league")))
+    case RunGPBettingLeague(_, Some(true), timeBarrier) if creds.isDefined =>
+      creds.foreach(runner.run(_, timeBarrier))
       publishLog("Selections made using previous password.")
 
-    case RunGPBettingLeague(_, Some(true)) if lastPassword.isEmpty =>
+    case RunGPBettingLeague(_, Some(true), _) if creds.isEmpty =>
       publishLog("No previous password.")
+
+    case SaveGPCredentials(credentials) =>
+      creds = Some(credentials)
+      publishLog("Credentials saved.")
+
+    case RunGPBettingLeagueTomorrowPreviousPass if creds.isDefined =>
+      creds.foreach(runner.run(_, Some(DateTime.now.plusDays(2).withTimeAtStartOfDay())))
+    case RunGPBettingLeagueTomorrowPreviousPass =>
+      publishLog("No previous password for automatic Tomorrow betting.")
+  }
+
+  override def postStop() = {
+    super.postStop()
+    runner.shutdown()
   }
 
   override def logSourceName = "GP Betting"

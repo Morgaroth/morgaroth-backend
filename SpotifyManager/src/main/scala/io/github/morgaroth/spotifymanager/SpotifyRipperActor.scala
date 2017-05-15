@@ -69,7 +69,7 @@ class SpotifyRipperActor(ctx: ConfigProvider) extends MorgarothActor {
         case Success(_) => publishLog("Uri Saved.")
         case Failure(t) => publishLog(s"Storing Uri unsuccessful: ${t.getMessage}.")
       }
-    case SaveCredentials(auth) =>
+    case SaveSpotifyCredentials(auth) =>
       log.info(s"Received save credentials command for user ${auth.user}")
       lastCreds = Some(auth)
       publishLog("User credentials updated.")

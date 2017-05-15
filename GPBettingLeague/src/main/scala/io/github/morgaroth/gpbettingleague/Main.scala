@@ -2,36 +2,43 @@ package io.github.morgaroth.gpbettingleague
 
 import java.net.URL
 
-import com.typesafe.config.{Config, ConfigFactory}
+import akka.actor.ActorSystem
+import akka.event.Logging
+import com.typesafe.config.Config
+import io.github.morgaroth.base.{MessagesPublisher, UserCredentials}
 import org.joda.time.{DateTime, Days, Minutes}
-import org.openqa.selenium.{Platform, WebDriver}
 import org.openqa.selenium.chrome.ChromeDriver
+import org.openqa.selenium.remote.{DesiredCapabilities, RemoteWebDriver}
 import org.openqa.selenium.support.ui.ExpectedConditions
 
 import scala.language.implicitConversions
-import org.openqa.selenium.remote.DesiredCapabilities
-import org.openqa.selenium.remote.RemoteWebDriver
 
-object Main {
+class Main(cfg: Config)(implicit as: ActorSystem) extends MessagesPublisher {
+  implicit val log = Logging(as, getClass)
 
-  def main(args: Array[String]): Unit = {
-    run(args(0), ConfigFactory.load().getConfig("gp-betting-league"))
+  override def logSourceName: String = "GP Betting Runner"
+
+  implicit lazy val driver = if (cfg.hasPath("remote-server")) {
+    log.info(s"running with remote server on ${cfg.getString("remote-server")}")
+    new RemoteWebDriver(new URL(cfg.getString("remote-server")), DesiredCapabilities.chrome)
+  } else {
+    log.info(s"running with local driver ${cfg.getString("driver-path")}")
+    System.setProperty("webdriver.chrome.driver", cfg.getString("driver-path"))
+    new ChromeDriver()
   }
 
-  def run(password: String, cfg: Config) {
+  def shutdown() {
+    driver.quit()
+  }
 
-    implicit val driver: WebDriver = if (cfg.hasPath("remote-server")) {
-      println(s"running with $password and remote server on ${cfg.getString("remote-server")}")
-      new RemoteWebDriver(new URL(cfg.getString("remote-server")), DesiredCapabilities.chrome)
-    } else {
-      println(s"running with $password and local driver ${cfg.getString("driver-path")}")
-      System.setProperty("webdriver.chrome.driver", cfg.getString("driver-path"))
-      new ChromeDriver()
-    }
-    val ocBets = oc.scrapMatches().map(x => x.uId -> x).toMap
+  def run(creds: UserCredentials, newerThan: Option[DateTime]) {
+    val ocBets = oc.scrapMatches(newerThan).map(x => x.uId -> x).toMap
 
-    gp.getActiveRounds(password).foreach { round =>
-      val data = gp.getMatches(round)
+    gp.loginToGPBettingLeague(creds)
+    log.debug("Logged into GPBettingLeague page")
+
+    gp.getActiveRounds().foreach { round =>
+      val data = gp.getMatches(round).filter(x => newerThan.forall(_.isAfter(x.start)))
 
       val changes = data.map { m =>
         println(s"  ${m.host} vs ${m.guest}")
@@ -42,20 +49,22 @@ object Main {
           println(s"      Draw: ${ocMatch.drawBet}")
           println(s"      ${ocMatch.guest}: ${ocMatch.guestBet}")
           val targetScore = oddsToScore(ocMatch.hostBet, ocMatch.guestBet)
-          println(s"      Forecast ${targetScore._1}:${targetScore._2}")
+          val score = s"${targetScore._1}:${targetScore._2}"
+          println(s"      Forecast $score")
           if (m.currentResult != "-:-") {
             m.currentBetElem.click()
           }
           gp.highlight(m.hostsElem)
           m.hostsElem.click()
-          for (i <- 0 until targetScore._1) {
+          for (_ <- 0 until targetScore._1) {
             m.hostsElem.click()
             Thread.sleep(500)
           }
-          for (i <- 0 until targetScore._2) {
+          for (_ <- 0 until targetScore._2) {
             m.guestsElem.click()
             Thread.sleep(500)
           }
+          publishLog(s"Selection for match ${m.host}:${m.guest}: $score")
           1
         } getOrElse {
           val possible = ocBets.filter(b => b._1.contains(m.guest.take(5)) || b._1.contains(m.host.take(5))).toList
@@ -66,23 +75,23 @@ object Main {
           }
           println(s"\tBut there are ${possible.length} options:")
           println(s"\t\t${possible.mkString("\n\t\t")}")
+          publishLog(s"No match ${m.host} vs ${m.guest} at (${m.start.toString("dd MMM HH:mm")}).")
           0
         }
       }.sum
       if (changes > 0) {
         val submit = gp.getSaveButton()
-        println("Submit!")
+        publishLog(s"Selections for round #${round.stripPrefix("http://bettingleaguegp.appspot.com/round.jsp?id=")} made.")
         submit.click()
         Option(ExpectedConditions.alertIsPresent()(driver)).foreach { _ =>
           driver.switchTo().alert().accept()
         }
       } else {
-        println("No matches to bet.")
+        publishLog(s"No matches to make selections for round #${round.stripPrefix("http://bettingleaguegp.appspot.com/round.jsp?id=")}.")
       }
     }
     driver.close()
   }
-
 
   def oddsToScore(host: Double, guest: Double): (Int, Int) = {
     val less = Math.min(host, guest)

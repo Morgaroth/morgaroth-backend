@@ -21,18 +21,21 @@ object oc extends Selenium {
 
   private case class M(host: String, guest: String, odds: (Double, Double, Double), hour: String) extends Row
 
-  private case class D(date: String) extends Row
+  private case class D(date: DateTime) extends Row
 
-  private def performScrapFor(link: String)(implicit driver: Driver): List[OCMatch] = {
+  val dateParser = DateTimeFormat.forPattern("EEE d MMM y").withLocale(Locale.ENGLISH)
+
+  private def performScrapFor(link: String, newerThan: Option[DateTime])(implicit driver: Driver): List[OCMatch] = {
     go to link
     Try(findElement(x"//div[@id='promo-modal']//span[@class='inside-close-button']")).foreach { popup =>
       println("Closing popup")
       popup.click()
     }
-    findElements(x"//tr[@class='match-on ' or @class='date first']").map { row =>
+    findElements(x"//tr[@class='match-on ' or @class='date first']").view.map { row =>
       row.getAttribute("class") match {
         case "date first" =>
-          D(row.findElement(By.cssSelector("td > p")).getText)
+          val dateStr = row.findElement(By.cssSelector("td > p")).getText.replace("nd ", " ").replace("rd ", " ").replace("th ", " ").replace("st ", " ")
+          D(DateTime.parse(dateStr, dateParser).withZoneRetainFields(DateTimeZone.UTC))
         case "match-on " =>
           highlight(row)
           val hour = row / x"./td[@class='time']//p"
@@ -45,25 +48,25 @@ object oc extends Selenium {
             M(h._1, g._1, (h._2.toDouble, d._2.toDouble, g._2.toDouble), hour.getText)
           }
       }
+    }.takeWhile {
+      case D(d) if newerThan.isDefined => newerThan.exists(_.isAfter(d))
+      case _ => true
     }.filter(_ != null).foldLeft((null, Nil): (DateTime, List[OCMatch])) {
       case ((null, _), m: M) => throw new IllegalArgumentException(s"invalid data $m")
-      case ((_, acc), d: D) =>
-        val dateString = d.date.replace("nd ", " ").replace("rd ", " ").replace("th ", " ").replace("st ", " ")
-        val parser = DateTimeFormat.forPattern("EEE d MMM y").withLocale(Locale.ENGLISH)
-        (DateTime.parse(dateString, parser).withZoneRetainFields(DateTimeZone.UTC), acc)
+      case ((_, acc), D(d)) => (d, acc)
       case ((d, acc), next: M) =>
         val start = d.withTime(new LocalTime(next.hour))
         (d, acc :+ OCMatch(next.host, next.guest, next.odds._1, next.odds._2, next.odds._3, start))
     }._2
   }
 
-  def scrapMatches()(implicit driver: Driver) = {
+  def scrapMatches(newerThan: Option[DateTime])(implicit driver: Driver) = {
     go to "https://www.oddschecker.com/"
     driver.manage().addCookie(new Cookie.Builder("hideCountryBanner", "true").domain(".oddschecker.com").build())
     driver.manage().addCookie(new Cookie.Builder("cookiePolicy", "true").domain(".oddschecker.com").build())
     List(
-      performScrapFor("https://www.oddschecker.com/football/elite-coupon"),
-      performScrapFor("https://www.oddschecker.com/football/other/poland/ekstraklasa")
+      performScrapFor("https://www.oddschecker.com/football/elite-coupon", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/other/poland/ekstraklasa", newerThan)
     ).flatten
   }
 
