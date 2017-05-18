@@ -42,7 +42,9 @@ sealed trait PhotoManagerCommands extends Commands
 
 case class PhotoPing(password: String) extends PhotoManagerCommands
 
-case class CheckConnectedDevices() extends PhotoManagerCommands
+case class CheckPhoneConnected() extends PhotoManagerCommands
+
+case class CheckExternalDriveConnected() extends PhotoManagerCommands
 
 /** Spotify Manager models */
 

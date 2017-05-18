@@ -60,7 +60,7 @@ lazy val PhotoManager = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")
   .settings(
     libraryDependencies ++= Seq(
-      AkkaStream, BetterFiles
+      AkkaStream, BetterFiles, ScalaTest
     )
   )
 
@@ -142,6 +142,7 @@ val root = (project in file(".")).settings(commonSettings: _*)
   packageSummary := "GPBettingLeague",
   packageDescription := "Automate app to bets on GP Betting League",
   debianPackageDependencies in Debian ++= Seq("java-runtime-headless (>= 1.8)"),
+  version in Debian := version.value + "-build-1",
   cleanAll := {
     clean.value
     (clean in app).value

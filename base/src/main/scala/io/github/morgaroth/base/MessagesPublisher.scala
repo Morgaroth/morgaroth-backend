@@ -1,6 +1,6 @@
 package io.github.morgaroth.base
 
-import akka.actor.{Actor, ActorSystem}
+import akka.actor.ActorSystem
 import org.json4s.JsonAST.JObject
 
 /**
