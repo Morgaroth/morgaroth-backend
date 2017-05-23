@@ -1,8 +1,9 @@
 import sbt.Keys.{clean, mappings}
+import com.typesafe.sbt.packager.archetypes.TemplateWriter
 
 name := "MorgarothServer"
 
-version := "1.0"
+version := "1.0.1"
 
 scalaVersion := "2.12.2"
 
@@ -136,13 +137,18 @@ val cleanAll = taskKey[Unit]("Cleans entire project.")
 
 val root = (project in file(".")).settings(commonSettings: _*)
   .dependsOn(app % "compile").aggregate(app)
-  .enablePlugins(JavaAppPackaging, WindowsPlugin, DebianPlugin).settings(
+  .enablePlugins(JavaServerAppPackaging, WindowsPlugin, DebianPlugin).settings(
   maintainer := "Mateusz Jaje <mateuszjaje@gmail.com",
   mainClass in Compile := Some("io.github.morgaroth.app.App"),
   packageSummary := "GPBettingLeague",
   packageDescription := "Automate app to bets on GP Betting League",
-  debianPackageDependencies in Debian ++= Seq("java-runtime-headless (>= 1.8)"),
+  debianPackageDependencies in Debian ++= Seq("java8-runtime-headless"),
   version in Debian := version.value + "-build-1",
+  serverLoading in Debian := Some(ServerLoader.Systemd),
+  linuxScriptReplacements += {
+    val functions = (sourceDirectory in app).value / "templates" / "custom-loader-functions"
+    "loader-functions" -> TemplateWriter.generateScript(functions.toURL, Nil)
+  },
   cleanAll := {
     clean.value
     (clean in app).value
