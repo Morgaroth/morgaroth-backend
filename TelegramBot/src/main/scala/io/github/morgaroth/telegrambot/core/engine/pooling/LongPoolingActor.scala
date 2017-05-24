@@ -3,7 +3,6 @@ package io.github.morgaroth.telegrambot.core.engine.pooling
 import java.util.UUID
 
 import akka.actor._
-import akka.stream.ActorMaterializer
 import io.github.morgaroth.telegrambot.core.api.methods.{GetUpdatesReq, Methods, Response}
 import io.github.morgaroth.telegrambot.core.api.models.Update
 import io.github.morgaroth.telegrambot.core.engine._
@@ -64,11 +63,11 @@ class LongPoolingActor(botName: String, val botToken: String) extends Actor with
       sender() ! Unregistered
 
     case Poll =>
-//      log.debug(s"dispatching poll to bot $botName")
+      //      log.debug(s"dispatching poll to bot $botName")
       getUpdates(GetUpdatesReq(offset, 10, 10 seconds)).onComplete(hardSelf ! _)
 
     case Success(r@Response(true, Right(Nil), _)) =>
-      log.debug(s"received empty updates list")
+      //      log.debug(s"received empty updates list")
       dispatchPoll()
 
     case Success(r@Response(true, Right(updates: List[Update]), _)) =>
