@@ -24,7 +24,12 @@
     <logger name="slick.model" level="${LOG_LEVEL:-WARN}"/>
     <logger name="slick.basic" level="${LOG_LEVEL:-WARN}"/>
     <logger name="org.reflections" level="${LOG_LEVEL:-WARN}"/>
-    <logger name="reactivemongo" level="WARN" />
+    <logger name="reactivemongo" level="WARN"/>
+    <logger name="akka.http.impl" level="WARN"/>
+    <logger name="akka.io.TcpOutgoingConnection" level="WARN"/>
+    <logger name="akka.io.SimpleDnsManager" level="WARN"/>
+    <logger name="akka.actor" level="INFO"/>
+    <logger name="com.typesafe.sslconfig.ssl.DefaultHostnameVerifier" level="WARN"/>
 
     <root level="${LOG_LEVEL:-DEBUG}">
         <appender-ref ref="CONSOLE"/>

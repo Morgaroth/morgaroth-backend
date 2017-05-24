@@ -13,6 +13,7 @@ val betterFilesVer = "3.0.0"
 
 val AkkaActor = "com.typesafe.akka" %% "akka-actor" % akka
 val AkkaStream = "com.typesafe.akka" %% "akka-stream" % akka
+val AkkaHttp = "com.typesafe.akka" %% "akka-http" % akkaHttp
 val Json4s = "org.json4s" %% "json4s-native" % "3.5.1"
 val ScalaTest = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 val MongoDriver = "org.reactivemongo" %% "reactivemongo" % "0.12.3"
@@ -115,15 +116,24 @@ val HTTPRpcServer = project.settings(commonSettings: _*)
   .settings(
     resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
     libraryDependencies ++= Seq(
-      Json4s,
-      "com.typesafe.akka" %% "akka-http" % akkaHttp,
+      Json4s, AkkaHttp,
       "de.heikoseeberger" %% "akka-http-json4s" % "1.15.0",
       "ch.megard" %% "akka-http-cors" % "0.1.11"
     )
   )
 
+val TelegramBot = project.settings(commonSettings: _*)
+  .dependsOn(base % "compile")
+  .settings(
+    resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
+    libraryDependencies ++= Seq(
+      Json4s, AkkaHttp, Ficus.ficusNewLibrary("ficus","1.4.0"),
+      "de.heikoseeberger" %% "akka-http-json4s" % "1.15.0"
+    )
+  )
+
 val app = project.settings(commonSettings: _*)
-  .dependsOn(List(HTTPRpcServer, misc, mongo, SpotifyManager, GPBettingLeague, PhotoManager).map(dep): _*)
+  .dependsOn(List(HTTPRpcServer, misc, mongo, SpotifyManager, GPBettingLeague, PhotoManager, TelegramBot).map(dep): _*)
   .settings(
     libraryDependencies ++= Seq(
       "ch.qos.logback" % "logback-classic" % "1.1.6",
@@ -152,6 +162,7 @@ val root = (project in file(".")).settings(commonSettings: _*)
     (clean in mongo).value
     (clean in SpotifyManager).value
     (clean in PhotoManager).value
+    (clean in TelegramBot).value
     (clean in GPBettingLeague).value
     (clean in HTTPRpcServer).value
   }
