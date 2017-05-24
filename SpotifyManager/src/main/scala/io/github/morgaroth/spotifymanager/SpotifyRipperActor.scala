@@ -11,7 +11,7 @@ import scala.language.postfixOps
 import scala.sys.process._
 import scala.util.{Failure, Success}
 
-object SpotifyRipperActor extends ServiceManager {
+object  SpotifyRipperActor extends ServiceManager {
   override def initialize(ctx: MContext) = {
     ctx.system.actorOf(Props(classOf[SpotifyRipperActor],ctx))
   }
