@@ -13,8 +13,8 @@ object OnlyTextMessage {
 
 object ForwardedTextMessage {
   def unapply(m: Message) = m match {
-    case Message(mId, from, _, chat, Some(forwardAuthor), _, Some(text), None, None, None, None, None, None, None, None, None, None, None, None, None, None) =>
-      Some((chat, text, from, forwardAuthor, mId))
+    case Message(mId, from, _, chat, Some(authorOfSource), _, Some(text), None, None, None, None, None, None, None, None, None, None, None, None, None, None) =>
+      Some((chat, text, from, authorOfSource, mId))
     case _ => None
   }
 }
