@@ -36,7 +36,7 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
   ctx.cfg.getStringArray(jobsCfgKey).recover {
     case _: NoSuchElementException => log.info("No jobs in crontab."); Nil
   }.onComplete {
-    case Success(keys) => keys.foreach { cmd => selfie ! Check(jobCfgKey(cmd)) }
+    case Success(keys) => keys.foreach { cmd => context.system.scheduler.scheduleOnce(10.seconds, selfie, Check(jobCfgKey(cmd))) }
     case Failure(thr) => log.error(thr, "Requesting all jobs from configuration end with exception {}", thr.getMessage)
   }
 
