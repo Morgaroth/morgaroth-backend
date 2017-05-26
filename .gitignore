@@ -2,3 +2,4 @@
 target
 project/project
 spotify_appkey.key
+*.patch

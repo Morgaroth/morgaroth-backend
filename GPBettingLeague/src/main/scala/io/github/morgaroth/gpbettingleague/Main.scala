@@ -24,7 +24,16 @@ class Main(cfg: Config)(implicit as: ActorSystem) extends MessagesPublisher {
   } else {
     log.info(s"running with local driver ${cfg.getString("driver-path")}")
     System.setProperty("webdriver.chrome.driver", cfg.getString("driver-path"))
-    new ChromeDriver()
+    try {
+      new ChromeDriver()
+    } catch {
+      case e: RuntimeException if e.getMessage == "Unable to find a free port" =>
+        import scala.sys.process._
+        "pgrep chromedriver".lineStream.foreach { pid =>
+          s"kill -9 $pid".!!
+        }
+        new ChromeDriver()
+    }
   }
 
   def shutdown() {

@@ -36,11 +36,22 @@ class SpotifyRipperActor(ctx: ConfigProvider) extends MorgarothActor {
   def rip(ent: SEntity, user: String, pass: String) = {
     val cmd = Seq("spotify-ripper", "--user", user, "--password", pass, "--key", keyFile, "--directory", outputDir, "--format", fileNameFormat,
       "--play-token-resume=5m", ent.uri)
-    log.info(s"ripping command is ${cmd.mkString(" ")}")
-    Future(cmd.lineStream_!.filterNot(_.contains("Progress: [")).filterNot(_.contains("Total: [")).map(_.drop(5).dropRight(5)).map { l =>
+    Future(cmd.lineStream.filterNot(_.contains("Progress: [")).filterNot(_.contains("Total: [")).map(_.drop(5).dropRight(5)).map { l =>
       if (l.contains(".mp3") && l.startsWith(outputDir)) selfie ! Ripped(File(l).name)
       l
     }.toList)
+  }
+
+  private def ripUri(uri: SEntity) = {
+    currentTask = rip(uri, lastCreds.get.user, lastCreds.get.password)
+    currentTask.onComplete {
+      case Success(_) => log.warning(s"Ripping ended.")
+        selfie ! RippingDone
+      case Failure(thr) =>
+        selfie ! RippingDone
+        log.error(thr, "Ripping ended with exception.")
+    }
+    publishLog("Ripping started.")
   }
 
   override def receive = {
@@ -50,19 +61,9 @@ class SpotifyRipperActor(ctx: ConfigProvider) extends MorgarothActor {
       currentTask = null
     case RipUri(SUri(uri), Some(auth)) if currentTask == null =>
       lastCreds = Some(auth)
-      currentTask = rip(uri, auth.user, auth.password)
-      currentTask.onComplete {
-        case Success(_) => log.warning(s"Ripping ended.")
-          selfie ! RippingDone
-        case Failure(thr) =>
-          selfie ! RippingDone
-          log.error(thr, "Ripping ended with exception.")
-      }
-      publishLog("Ripping started.")
-    case RipUri(SUri(uri), None) if lastCreds.isDefined =>
-      rip(uri, lastCreds.get.user, lastCreds.get.password)
-      publishLog("TODO: Implement ripping actions.")
-
+      ripUri(uri)
+    case RipUri(SUri(uri), None) if lastCreds.isDefined && currentTask == null =>
+      ripUri(uri)
     case e@AddUriToMaintain(uri: String) =>
       log.info(s"received command $e")
       ctx.cfg.appendToStringArray("spotify-ripper.stored-uris", uri).whenCompleted {

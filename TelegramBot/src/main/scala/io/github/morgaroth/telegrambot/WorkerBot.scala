@@ -8,12 +8,13 @@ import io.github.morgaroth.telegrambot.core.api.models.extractors._
 import io.github.morgaroth.telegrambot.core.api.models.formats._
 import io.github.morgaroth.telegrambot.core.api.models.{ReplyKeyboardHide, ReplyKeyboardMarkup, SendMessage, Update, User}
 import io.github.morgaroth.telegrambot.core.engine.NewUpdate
+import io.github.morgaroth.telegrambot.core.engine.core.BotActor.Initialized
 
 import scala.language.reflectiveCalls
 
 object WorkerBot {
 
-  def props(cfg: Config) = Props(classOf[WorkerBot], cfg)
+  def props(cfg: Config) = Props(new WorkerBot(cfg))
 }
 
 class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
@@ -28,9 +29,10 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
     case u: User =>
       me = u
       log.info(s"I'm a $u")
+      worker = sender()
+    case Initialized =>
       context become working
       unstashAll()
-      worker = sender()
     case _ =>
       stash()
   }
@@ -42,8 +44,22 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
   }
 
   def working: Receive = {
+    case u@NewUpdate(_, _, Update(_, m)) if m.from.id == 36792931 && m.chat.isPrvChat =>
+      workingHandler(u)
+    case u: NewUpdate =>
+      log.error("Message from unknown author {}", u)
+    case unhandled =>
+      log.error(s"unhandled message $unhandled")
+  }
+
+  def workingHandler = PartialFunction[Any, Unit] {
     case TextCommand("/shutdown", _) =>
       sys.exit(0)
+
+    case TextCommand("/upgrade", _) =>
+      import scala.sys.process._
+      log.info(s"PWD is ${"pwd".!!.trim}")
+      log.info("git pull".!!.trim)
 
     case SingleArgCommand("_add_me", group, (chat, from, _)) if from.username.isDefined && chat.isGroupChat && group.nonEmpty =>
 
@@ -68,18 +84,20 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
     case SingleArgCommand("set_spotify_password", pass, _) =>
       publish(SaveSpotifyCredentials(UserCredentials("Morgaroth", pass)))
 
-    case TextCommand("gp password" | "gp pass", _) =>
+    case TextCommand("gp password" | "gp pass", (chat, _, _)) =>
+      sender() ! chat.msg("Ok, now send me Your GP password")
       context.become(waitingForReply(pass => publish(SaveGPCredentials(UserCredentials("mateusz.jaje", pass)))))
 
-    case TextCommand("spotify password" | "spotify pass", _) =>
+    case TextCommand("spotify password" | "spotify pass", (chat, _, _)) =>
+      sender() ! chat.msg("Ok, now send me Your Spotify password")
       context.become(waitingForReply(pass => publish(SaveSpotifyCredentials(UserCredentials("Morgaroth", pass)))))
 
     case NoArgCommand("run_gp_betting_league_tomorrow", _) |
-         TextCommand("run gp betting league for tomorrow" | "run gp tomorrow", _) =>
+         TextCommand("run gp betting league for tomorrow" | "run gp tomorrow" | "make selections for tomorrow", _) =>
       publish(RunGPBettingLeagueTomorrowPreviousPass)
 
     case TextCommand(spotifyUri, (chat, _, _)) if spotifyUri.startsWith("spotify:") =>
-      sender() ! chat.msg("Got Spotify URI, reaction not implemented.")
+      publish(RipUri(spotifyUri, None))
 
     case NewUpdate(_, _, u: Update) if u.message.from.username.isDefined && u.message.chat.isGroupChat =>
       println(s"msg from ${u.message.from}")
