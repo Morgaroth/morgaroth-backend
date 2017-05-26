@@ -64,8 +64,8 @@ class InternalCron(ctx: ConfigProvider) extends MorgarothActor {
             future(None)
           }
         } else {
-          val delay = minutesToNextRun.minutes
-          log.debug(s"Scheduling job ${job.name} in $delay.")
+          val delay = minutesToNextRun.minutes + 2.seconds
+          log.info(s"Scheduling job ${job.name} in $delay.")
           context.system.scheduler.scheduleOnce(delay, self, Check(jobId))
           future(None)
         }
