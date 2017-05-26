@@ -29,10 +29,10 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
     case u: User =>
       me = u
       log.info(s"I'm a $u")
-      worker = sender()
-    case Initialized =>
       context become working
       unstashAll()
+      worker = sender()
+    case Initialized =>
     case _ =>
       stash()
   }
