@@ -4,6 +4,7 @@ import akka.actor.Props
 import com.typesafe.config.ConfigFactory
 import io.github.morgaroth.base._
 import org.joda.time.DateTime
+import org.openqa.selenium.remote.RemoteWebDriver
 
 object GPBettingLeagueActor extends ServiceManager {
   override def initialize(ctx: MContext) = {
@@ -18,18 +19,16 @@ class GPBettingLeagueActor extends MorgarothActor {
 
   val cfg = ConfigFactory.load().getConfig("gp-betting-league")
 
-  val runner = new Main(cfg)
-
   override def receive = {
     case RunGPBettingLeague(Some(credentials: UserCredentials), _, timeBarrier) =>
-      runner.run(credentials, timeBarrier)
+      new Main(cfg).run(credentials, timeBarrier)
       creds = Some(credentials)
       publishLog("Selections made.")
 
     case RunGPBettingLeague(_, Some(true), timeBarrier) if creds.isDefined =>
       creds.foreach { credentials =>
         try {
-          runner.run(credentials, Some(DateTime.now.plusDays(2).withTimeAtStartOfDay()))
+          withRunner(_.run(credentials, Some(DateTime.now.plusDays(2).withTimeAtStartOfDay())))
           publishLog("Selections made using previous password.")
         } catch {
           case t: Throwable =>
@@ -48,7 +47,7 @@ class GPBettingLeagueActor extends MorgarothActor {
     case RunGPBettingLeagueTomorrowPreviousPass if creds.isDefined =>
       creds.foreach { credentials =>
         try {
-          runner.run(credentials, Some(DateTime.now.plusDays(2).withTimeAtStartOfDay()))
+          withRunner(_.run(credentials, Some(DateTime.now.plusDays(2).withTimeAtStartOfDay())))
         } catch {
           case t: Throwable =>
             publishLog("Error during making selections.")
@@ -59,9 +58,15 @@ class GPBettingLeagueActor extends MorgarothActor {
       publishLog("No previous password for automatic Tomorrow betting.")
   }
 
+  def withRunner(fn: Main => Unit) = {
+    val runner = new Main(cfg)
+    fn(runner)
+    runner.shutdown()
+  }
+
   override def postStop() = {
     super.postStop()
-    runner.shutdown()
+    //    new Main(cfg).shutdown()
   }
 
   override def logSourceName = "GP Betting"
