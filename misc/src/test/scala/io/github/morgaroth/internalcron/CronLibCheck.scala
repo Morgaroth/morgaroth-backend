@@ -18,4 +18,13 @@ class CronLibCheck extends FlatSpec with Matchers {
     val c = parse.right.get.next(b.get)
     println(a, b, c)
   }
+
+  it should "parse every hour unsing shorter syntax" in {
+    val parse = Cron.parse("0 0 * * * ?")
+    parse shouldBe 'right
+    val a = parse.right.get.next(DateTime.now.minusMonths(5))
+    val b = parse.right.get.next(a.get)
+    val c = parse.right.get.next(b.get)
+    println(a, b, c)
+  }
 }

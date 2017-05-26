@@ -27,8 +27,16 @@ class GPBettingLeagueActor extends MorgarothActor {
       publishLog("Selections made.")
 
     case RunGPBettingLeague(_, Some(true), timeBarrier) if creds.isDefined =>
-      creds.foreach(runner.run(_, timeBarrier))
-      publishLog("Selections made using previous password.")
+      creds.foreach { credentials =>
+        try {
+          runner.run(credentials, Some(DateTime.now.plusDays(2).withTimeAtStartOfDay()))
+          publishLog("Selections made using previous password.")
+        } catch {
+          case t: Throwable =>
+            log.warning("encountered exception {} ({}) wile running RunGPBettingLeague", t.getMessage, t.getClass.getCanonicalName)
+            publishLog("Error during making selections.")
+        }
+      }
 
     case RunGPBettingLeague(_, Some(true), _) if creds.isEmpty =>
       publishLog("No previous password.")
@@ -38,7 +46,15 @@ class GPBettingLeagueActor extends MorgarothActor {
       publishLog("Credentials saved.")
 
     case RunGPBettingLeagueTomorrowPreviousPass if creds.isDefined =>
-      creds.foreach(runner.run(_, Some(DateTime.now.plusDays(2).withTimeAtStartOfDay())))
+      creds.foreach { credentials =>
+        try {
+          runner.run(credentials, Some(DateTime.now.plusDays(2).withTimeAtStartOfDay()))
+        } catch {
+          case t: Throwable =>
+            publishLog("Error during making selections.")
+            log.warning("encountered exception {} ({}) wile running RunGPBettingLeagueTomorrowPreviousPass", t.getMessage, t.getClass.getCanonicalName)
+        }
+      }
     case RunGPBettingLeagueTomorrowPreviousPass =>
       publishLog("No previous password for automatic Tomorrow betting.")
   }
