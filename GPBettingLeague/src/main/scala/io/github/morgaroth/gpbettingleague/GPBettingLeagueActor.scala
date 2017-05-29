@@ -4,7 +4,6 @@ import akka.actor.Props
 import com.typesafe.config.ConfigFactory
 import io.github.morgaroth.base._
 import org.joda.time.DateTime
-import org.openqa.selenium.remote.RemoteWebDriver
 
 object GPBettingLeagueActor extends ServiceManager {
   override def initialize(ctx: MContext) = {

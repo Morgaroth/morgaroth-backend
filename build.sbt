@@ -76,7 +76,10 @@ lazy val mongo = project.settings(commonSettings: _*)
   .dependsOn(base % "compile")
   .settings(
     libraryDependencies ++= Seq(
-      MongoDriver
+      MongoDriver, ScalaTest,
+      "com.whisk" %% "docker-testkit-scalatest" % "0.9.0" % "test",
+      "com.whisk" %% "docker-testkit-impl-docker-java" % "0.9.0" % "test",
+      "org.mongodb.scala" %% "mongo-scala-driver" % "2.1.0"
     )
   )
 
@@ -128,7 +131,7 @@ val TelegramBot = project.settings(commonSettings: _*)
   .settings(
     resolvers += Resolver.bintrayRepo("hseeberger", "maven"),
     libraryDependencies ++= Seq(
-      Json4s, AkkaHttp, Ficus.ficusNewLibrary("ficus","1.4.0"),
+      Json4s, AkkaHttp, Ficus.ficusNewLibrary("ficus", "1.4.0"),
       "de.heikoseeberger" %% "akka-http-json4s" % "1.15.0"
     )
   )
