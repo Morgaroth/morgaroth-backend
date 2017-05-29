@@ -41,7 +41,10 @@ class Main(cfg: Config)(implicit as: ActorSystem) extends MessagesPublisher {
   }
 
   def run(creds: UserCredentials, newerThan: Option[DateTime]) {
+    publishLog("Making selections started.")
+
     val ocBets = oc.scrapMatches(newerThan).map(x => x.uId -> x).toMap
+    publishLog("Data from oddschecker scrapped.")
 
     gp.loginToGPBettingLeague(creds)
     log.debug("Logged into GPBettingLeague page")
