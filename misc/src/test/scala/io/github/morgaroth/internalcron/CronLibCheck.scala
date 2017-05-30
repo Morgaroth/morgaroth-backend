@@ -10,7 +10,7 @@ import org.scalatest.{FlatSpec, Matchers}
   */
 class CronLibCheck extends FlatSpec with Matchers {
 
-  "Cron library" should "parse every minute * * * * *" in {
+  "Cron library" should "parse every minute * * * * * ?" in {
     val parse = Cron.parse("0 * * * * ?")
     parse shouldBe 'right
     val a = parse.right.get.next(DateTime.now.minusMonths(5))

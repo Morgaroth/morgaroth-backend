@@ -15,6 +15,7 @@ val betterFilesVer = "3.0.0"
 val AkkaActor = "com.typesafe.akka" %% "akka-actor" % akka
 val AkkaStream = "com.typesafe.akka" %% "akka-stream" % akka
 val AkkaHttp = "com.typesafe.akka" %% "akka-http" % akkaHttp
+val AkkaTestKit = "com.typesafe.akka" %% "akka-testkit" % akka % "test"
 val Json4s = "org.json4s" %% "json4s-native" % "3.5.1"
 val ScalaTest = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 val MongoDriver = "org.reactivemongo" %% "reactivemongo" % "0.12.3"
@@ -53,7 +54,7 @@ val base = project.settings(commonSettings: _*)
 val misc = project.settings(commonSettings: _*).dependsOn(base % "compile")
   .settings(
     libraryDependencies ++= Seq(
-      ScalaTest,
+      ScalaTest, AkkaTestKit,
       "com.github.alonsodomin.cron4s" %% "cron4s-joda" % "0.4.0"
     )
   )
