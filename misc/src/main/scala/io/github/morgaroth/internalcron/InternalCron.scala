@@ -57,7 +57,7 @@ class InternalCron(cfg: SimpleConfig) extends MorgarothActor {
       (for {
         job <- getEntry(jobId)
         nextRun = Cron.unsafeParse(job.defString).next(job.lastRun.getOrElse(startOfTime)).get
-        _ <- if (nextRun.isBeforeNow <= 0) {
+        _ <- if (nextRun.isBeforeNow) {
           CommandBB.interpret(job.command).map { cmd =>
             publish(cmd)
             publishLog(s"Job ${job.name} started.")
@@ -68,7 +68,7 @@ class InternalCron(cfg: SimpleConfig) extends MorgarothActor {
             future(None)
           }
         } else {
-          val delay = minutesToNextRun.minutes + 2.seconds
+          val delay = (nextRun.getMillis - DateTime.now.getMillis).millis + 2.seconds
           log.info(s"Scheduling job ${job.name} in $delay.")
           context.system.scheduler.scheduleOnce(delay, self, Check(jobId))
           future(None)
