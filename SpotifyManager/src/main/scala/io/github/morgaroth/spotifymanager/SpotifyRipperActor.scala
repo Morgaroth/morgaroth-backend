@@ -11,9 +11,9 @@ import scala.language.postfixOps
 import scala.sys.process._
 import scala.util.{Failure, Success}
 
-object  SpotifyRipperActor extends ServiceManager {
+object SpotifyRipperActor extends ServiceManager {
   override def initialize(ctx: MContext) = {
-    ctx.system.actorOf(Props(classOf[SpotifyRipperActor],ctx))
+    ctx.system.actorOf(Props(classOf[SpotifyRipperActor], ctx))
   }
 
   case object RippingDone
@@ -36,6 +36,7 @@ class SpotifyRipperActor(ctx: ConfigProvider) extends MorgarothActor {
   def rip(ent: SEntity, user: String, pass: String) = {
     val cmd = Seq("spotify-ripper", "--user", user, "--password", pass, "--key", keyFile, "--directory", outputDir, "--format", fileNameFormat,
       "--play-token-resume=5m", ent.uri)
+    log.info(s"ripping command is ${cmd.mkString(" ").replaceAllLiterally(pass, "*" * pass.length)}")
     Future(cmd.lineStream.filterNot(_.contains("Progress: [")).filterNot(_.contains("Total: [")).map(_.drop(5).dropRight(5)).map { l =>
       if (l.contains(".mp3") && l.startsWith(outputDir)) selfie ! Ripped(File(l).name)
       l
