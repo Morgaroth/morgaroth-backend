@@ -8,7 +8,6 @@
         </encoder>
     </appender>
 
-    <!--<logger name="akka" level="${LOG_LEVEL:-WARN}"/>-->
     <logger name="com.zaxxer.hikari" level="${LOG_LEVEL:-WARN}"/>
     <logger name="com.couchbase.client" level="${LOG_LEVEL:-WARN}"/>
     <logger name="org.postgresql" level="${LOG_LEVEL:-WARN}"/>

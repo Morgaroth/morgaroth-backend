@@ -96,11 +96,14 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
          TextCommand("run gp betting league for tomorrow" | "run gp tomorrow" | "make selections for tomorrow", _) =>
       publish(RunGPBettingLeagueTomorrowPreviousPass)
 
+    case TextCommand("run gp betting league" | "run gp" | "make selections", _) =>
+      publish(RunGPBettingLeague(None, Some(true), None))
+
     case TextCommand(spotifyUri, (chat, _, _)) if spotifyUri.startsWith("spotify:") =>
       publish(RipUri(spotifyUri, None))
 
     case NewUpdate(_, _, u: Update) if u.message.from.username.isDefined && u.message.chat.isGroupChat =>
-      println(s"msg from ${u.message.from}")
+      println(s"unhandled msg (${u.message.text}) from ${u.message.from}")
 
     case unhandled =>
       log.warning("unhandled message {}", unhandled)

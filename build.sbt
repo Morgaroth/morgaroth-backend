@@ -92,7 +92,8 @@ lazy val GPBettingLeague = project.settings(commonSettings: _*)
       "org.seleniumhq.selenium" % "selenium-chrome-driver" % selenium,
       "org.seleniumhq.selenium" % "selenium-support" % selenium,
       "ru.yandex.qatools.ashot" % "ashot" % "1.5.3",
-      "commons-io" % "commons-io" % "2.5"
+      "commons-io" % "commons-io" % "2.5",
+      ScalaTest
     ),
     mappings in(Compile, packageBin) ++= mappings.in(macros, Compile, packageBin).value,
     mappings in(Compile, packageSrc) ++= mappings.in(macros, Compile, packageSrc).value,
@@ -104,11 +105,13 @@ lazy val GPBettingLeague = project.settings(commonSettings: _*)
         |import org.openqa.selenium.chrome.ChromeDriver
         |import org.openqa.selenium.Cookie
         |import io.github.morgaroth.gpbettingleague.Driver
+        |import io.github.morgaroth.base.UserCredentials
         |import org.joda.time.{DateTime, LocalTime}
         |
         |import io.github.morgaroth.gpbettingleague._
         |import xpath._
         |
+        |System.setProperty("webdriver.chrome.driver","/mnt/prv-projects/chromedriver")
         |implicit val driver: WebDriver = new ChromeDriver()
         |
         |val seleniumHelpers = new Selenium {}

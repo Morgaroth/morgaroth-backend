@@ -25,6 +25,12 @@ object oc extends Selenium {
 
   val dateParser = DateTimeFormat.forPattern("EEE d MMM y").withLocale(Locale.ENGLISH)
 
+  def normalizeDateString(str: String) =
+    str.replaceAll("(\\d+)(st|th|rd|nd) ", "$1 ")
+
+  def parseDateTime(dateStr: String) =
+    DateTime.parse(normalizeDateString(dateStr), dateParser).withZoneRetainFields(DateTimeZone.UTC)
+
   private def performScrapFor(link: String, newerThan: Option[DateTime])(implicit driver: Driver): List[OCMatch] = {
     go to link
     Try(findElement(x"//div[@id='promo-modal']//span[@class='inside-close-button']")).foreach { popup =>
@@ -34,8 +40,7 @@ object oc extends Selenium {
     findElements(x"//tr[@class='match-on ' or @class='date first']").view.map { row =>
       row.getAttribute("class") match {
         case "date first" =>
-          val dateStr = row.findElement(By.cssSelector("td > p")).getText.replace("nd ", " ").replace("rd ", " ").replace("th ", " ").replace("st ", " ")
-          D(DateTime.parse(dateStr, dateParser).withZoneRetainFields(DateTimeZone.UTC))
+          D(parseDateTime(row.findElement(By.cssSelector("td > p")).getText))
         case "match-on " =>
           highlight(row)
           val hour = row / x"./td[@class='time']//p"

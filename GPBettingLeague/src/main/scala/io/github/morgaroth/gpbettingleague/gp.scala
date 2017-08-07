@@ -11,8 +11,8 @@ import scala.util.Try
 object gp extends Selenium {
 
   def loginToGPBettingLeague(creds: UserCredentials)(implicit wd: Driver) = {
-    go to "http://bettingleaguegp.appspot.com"
-    if (currentUrl == "http://bettingleaguegp.appspot.com/login.jsp") {
+    go to "https://bettingleaguegp.appspot.com"
+    if (currentUrl == "https://bettingleaguegp.appspot.com/login.jsp") {
       val loginInput = findElement(By.name("login"))
       val passInput = findElement(By.name("password"))
       loginInput.sendKeys(creds.user)
