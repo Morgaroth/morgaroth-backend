@@ -88,6 +88,7 @@ lazy val GPBettingLeague = project.settings(commonSettings: _*)
   .dependsOn(macros, base % "compile")
   .settings(
     libraryDependencies ++= Seq(
+      Ficus.ficusNewLibrary("ficus", "1.4.0"),
       "org.seleniumhq.selenium" % "selenium-java" % selenium,
       "org.seleniumhq.selenium" % "selenium-chrome-driver" % selenium,
       "org.seleniumhq.selenium" % "selenium-support" % selenium,

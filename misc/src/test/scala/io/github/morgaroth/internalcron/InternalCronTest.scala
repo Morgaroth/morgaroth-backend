@@ -3,7 +3,7 @@ package io.github.morgaroth.internalcron
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import io.github.morgaroth.base.configuration.InMemoryConfig
-import io.github.morgaroth.base.{AddEntry, Commands, GetEntries}
+import io.github.morgaroth.base.{AddEntry, Commands, GetEntries, RunGPBettingLeagueTomorrowPreviousPass}
 import org.joda.time.DateTime
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpecLike, Matchers}
@@ -47,8 +47,8 @@ class InternalCronTest extends TestKit(ActorSystem("cron-test")) with FlatSpecLi
     cfg.appendToStringArray(InternalCron.jobsCfgKey, testjob1)
     cfg.appendToStringArray(InternalCron.jobsCfgKey, testjob2)
 
-    cfg.put(InternalCron.jobCfgKey(testjob1), CronEntry(CronExamples.everyHour, cronCommand1, testjob1, Some(DateTime.now.minusMinutes(30))))
-    cfg.put(InternalCron.jobCfgKey(testjob2), CronEntry(CronExamples.everyHour, cronCommand2, testjob2, Some(DateTime.now.minusMinutes(90))))
+    cfg.put(InternalCron.jobCfgKey(testjob1), CronEntry(CronExamples.everyMinute, cronCommand1, testjob1, Some(DateTime.now.minusSeconds(1))))
+    cfg.put(InternalCron.jobCfgKey(testjob2), CronEntry(CronExamples.everyMinute, cronCommand2, testjob2, Some(DateTime.now.minusSeconds(61))))
 
     val p = TestProbe()
     system.eventStream.subscribe(p.ref, classOf[Commands])
@@ -56,7 +56,7 @@ class InternalCronTest extends TestKit(ActorSystem("cron-test")) with FlatSpecLi
     cfg.getStringArray(InternalCron.jobsCfgKey).futureValue.size shouldBe 2
     system.actorOf(InternalCron.props(cfg))
 
-    p.expectMsgType[GetEntries.type](20.seconds)
-    expectNoMsg()
+    p.expectMsgType[RunGPBettingLeagueTomorrowPreviousPass.type](15.seconds)
+    p.expectNoMsg()
   }
 }

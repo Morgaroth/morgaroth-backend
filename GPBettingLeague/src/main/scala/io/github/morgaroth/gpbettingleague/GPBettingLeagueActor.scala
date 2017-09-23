@@ -4,9 +4,10 @@ import akka.actor.Props
 import com.typesafe.config.ConfigFactory
 import io.github.morgaroth.base._
 import org.joda.time.DateTime
+import net.ceedubs.ficus.Ficus._
 
 object GPBettingLeagueActor extends ServiceManager {
-  override def initialize(ctx: MContext) = {
+  override def initialize(ctx: MContext): Unit = {
     ctx.system.actorOf(Props(new GPBettingLeagueActor))
   }
 }
@@ -18,6 +19,10 @@ class GPBettingLeagueActor extends MorgarothActor {
 
   val cfg = ConfigFactory.load().getConfig("gp-betting-league")
 
+  (cfg.as[Option[String]]("username") zip cfg.as[Option[String]]("password")).foreach {
+    case (username, pass) => self ! SaveGPCredentials(UserCredentials(username, pass))
+  }
+
   override def receive = {
     case RunGPBettingLeague(Some(credentials: UserCredentials), _, timeBarrier) =>
       new Main(cfg).run(credentials, timeBarrier)
@@ -27,11 +32,12 @@ class GPBettingLeagueActor extends MorgarothActor {
     case RunGPBettingLeague(_, Some(true), timeBarrier) if creds.isDefined =>
       creds.foreach { credentials =>
         try {
-          withRunner(_.run(credentials, Some(DateTime.now.plusDays(2).withTimeAtStartOfDay())))
+          withRunner(_.run(credentials, timeBarrier.orElse(Some(DateTime.now.plusDays(14).withTimeAtStartOfDay()))))
           publishLog("Selections made using previous password.")
         } catch {
           case t: Throwable =>
             log.warning("encountered exception {} ({}) wile running RunGPBettingLeague", t.getMessage, t.getClass.getCanonicalName)
+            t.printStackTrace()
             publishLog("Error during making selections.")
         }
       }
@@ -49,6 +55,7 @@ class GPBettingLeagueActor extends MorgarothActor {
           withRunner(_.run(credentials, Some(DateTime.now.plusDays(2).withTimeAtStartOfDay())))
         } catch {
           case t: Throwable =>
+            t.printStackTrace()
             publishLog("Error during making selections.")
             log.warning("encountered exception {} ({}) wile running RunGPBettingLeagueTomorrowPreviousPass", t.getMessage, t.getClass.getCanonicalName)
         }
@@ -57,13 +64,13 @@ class GPBettingLeagueActor extends MorgarothActor {
       publishLog("No previous password for automatic Tomorrow betting.")
   }
 
-  def withRunner(fn: Main => Unit) = {
+  def withRunner(fn: Main => Unit) {
     val runner = new Main(cfg)
     fn(runner)
     runner.shutdown()
   }
 
-  override def postStop() = {
+  override def postStop() {
     super.postStop()
     //    new Main(cfg).shutdown()
   }

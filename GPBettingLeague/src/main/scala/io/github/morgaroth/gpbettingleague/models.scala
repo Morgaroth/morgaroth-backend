@@ -6,45 +6,63 @@ import org.openqa.selenium.{WebDriver, WebElement}
 
 import scala.language.implicitConversions
 
+object GPNames {
+  def apply(name: String, names: String*) = name :: name.toList
+}
+
+object OCNames {
+  def apply(name: String, names: String*) = name :: name.toList
+}
+
 object Universal {
   // universal name -> ( GP names, OC names )
   val data = Map(
-    "Ajax Amsterdam" -> (List("Ajax Amsterdam"), List("Ajax")),
-    "AS Roma" -> (List("AS Roma"), List("Roma")),
-    "Atletico Madrid" ->(List("Atletico Madrid"), List("Atlético Madrid", "Atletico de Madrid")),
-    "Bastia" -> (List("SC Bastia"), List("Bastia")),
-    "Betis" -> (List("Betis"), List("Real Betis")),
-    "Bournemouth" -> (List("AFC Bournemouth"), List("Bournemouth")),
-    "Borussia Monchengladbach" -> (List("Borussia Moenchengladbach"), List("Borussia Monchengladbach")),
-    "Cracovia" -> (List("Cracovia"), List("Cracovia Krakow")),
-    "Genk" -> (List("Racing Genk"), List("Genk")),
-    "Gijon" -> (List("Sporting Gijon"), List("Gijon")),
-    "Hamburg" -> (List("Hamburger SV"), List("Hamburg")),
-    "Hull" -> (List("Hull City"), List("Hull")),
-    "Inter Milan" -> (List("Inter Milan"), List("Inter")),
-    "Kolonia" -> (List("FC Cologne"), List("FC Koln")),
-    "Leicester" -> (List("Leicester City"), List("Leicester")),
-    "Legia Warszawa" -> (List("Legia Warszawa"), List("Legia Warsaw")),
-    "Mainz" -> (List("FSV Mainz 05"), List("Mainz 05")),
-    "Man City" -> (List("Manchester City"), List("Man City")),
-    "Man Utd" -> (List("Manchester United"), List("Man Utd")),
-    "Paris Saint Germain" -> (List("Paris Saint Germain"), List("Paris Saint-Germain")),
-    "Real Betis" -> (List("Real Betis"), List("Betis")),
-    "Saint-Etienne" -> (List("Saint-Etienne"), List("St Etienne")),
-    "Stoke" -> (List("Stoke City"), List("Stoke")),
-    "Swansea" -> (List("Swansea City"), List("Swansea")),
-    "Termalica Nieciecza" -> (List("Termalica Nieciecza"), List("Termalica BB Nieciecza")),
-    "West Ham" -> (List("West Ham United"), List("West Ham")),
-    "West Brom" -> (List("West Bromwich Albion"), List("West Brom")),
-    "Tottenham Hotspur" -> (List("Tottenham Hotspur"), List("Tottenham")),
+    "Ajax Amsterdam" -> List("Ajax"),
+    "AS Roma" -> List("Roma"),
+    "Atletico Madrid" -> List("Atlético Madrid", "Atletico de Madrid"),
+    "Austria Wien" -> List("Austria Wien", "Austria Vienna"),
+    "Bastia" -> List("SC Bastia"),
+    "Betis" -> List("Real Betis"),
+    "Bournemouth" -> List("AFC Bournemouth"),
+    "Cracovia" -> List("Cracovia Krakow"),
+    "Genk" -> List("Racing Genk"),
+    "Gijon" -> List("Sporting Gijon"),
+    "Hamburg" -> List("Hamburger SV"),
+    "Hannover 96" -> List("Hannover 0.0"),
+    "Hull" -> List("Hull City"),
+    "Inter Milan" -> List("Inter"),
+    "Kolonia" -> List("FC Cologne", "FC Koln"),
+    "Leicester" -> List("Leicester City"),
+    "Legia Warszawa" -> List("Legia Warsaw"),
+    "Lokomotiv Moscow" -> List("Lok Moscow"),
+    "Ludogorets" -> List("Ludogorets Razgrad"),
+    "Macedonia" -> List("FYR Macedonia"),
+    "Mainz" -> List("FSV Mainz 05", "Mainz 05"),
+    "Man City" -> List("Manchester City"),
+    "Man Utd" -> List("Manchester United"),
+    "Northern Ireland" -> List("North. Ireland"),
+    "Olympiacos" -> List("Olympiakos"),
+    "Paris St Germain" -> List("Paris Saint Germain", "Paris St Germain", "Paris Saint-Germain"),
+    "Real Betis" -> List("Real Betis", "Betis"),
+    "Republic of Ireland" -> List("Ireland Rep", "Republic of Ireland"),
+    "Saint-Etienne" -> List("St Etienne"),
+    "SPAL 2013" -> List("Spal"),
+    "Stoke" -> List("Stoke City"),
+    "Sporting CP" -> List("Sporting Lisbon"),
+    "Swansea" -> List("Swansea City"),
+    "Termalica Nieciecza" -> List("Termalica BB Nieciecza", "Termalica Bruk-Bet Nieciecza"),
+    "Tottenham Hotspur" -> List("Tottenham"),
+    "West Ham" -> List("West Ham United"),
+    "West Brom" -> List("West Bromwich Albion"),
+    "Vitoria de Guimaraes" -> List("Vitoria Guimaraes"),
+    "Zulte-Waregem" -> List("Zulte Waregem"),
   )
 
-  val gpToUni = data.flatMap(x => x._2._1.map(_ -> x._1))
-  val ocToUni = data.flatMap(x => x._2._2.map(_ -> x._1))
+  val toUni = data.flatMap(x => x._2.map(_ -> x._1))
 
-  def gpUid(m: GpMatch) = s"${gpToUni.getOrElse(m.host, m.host)}:${gpToUni.getOrElse(m.guest, m.guest)}"
+  def gpUid(m: GpMatch) = s"${toUni.getOrElse(m.host, m.host)}:${toUni.getOrElse(m.guest, m.guest)}"
 
-  def ocUid(m: OCMatch) = s"${ocToUni.getOrElse(m.host, m.host)}:${ocToUni.getOrElse(m.guest, m.guest)}"
+  def ocUid(m: OCMatch) = s"${toUni.getOrElse(m.host, m.host)}:${toUni.getOrElse(m.guest, m.guest)}"
 }
 
 

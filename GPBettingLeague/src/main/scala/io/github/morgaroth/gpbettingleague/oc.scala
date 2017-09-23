@@ -44,7 +44,12 @@ object oc extends Selenium {
         case "match-on " =>
           highlight(row)
           val hour = row / x"./td[@class='time']//p"
-          val bets = row /+ x"./td[@data-best-odds]" map (x => (x / x".//span[@class='fixtures-bet-name']" getText, x.getAttribute("data-best-odds")))
+          val bets = row /+ x"./td[@data-best-odds]" map { cell =>
+            (
+              (cell / x".//span[@class='add-to-bet-basket']").getAttribute("data-name"),
+              cell.getAttribute("data-best-odds")
+            )
+          }
           if (bets.size != 3) {
             println(s"WTF invalid amount of bets $bets ${row.getText}")
             null
@@ -71,7 +76,8 @@ object oc extends Selenium {
     driver.manage().addCookie(new Cookie.Builder("cookiePolicy", "true").domain(".oddschecker.com").build())
     List(
       performScrapFor("https://www.oddschecker.com/football/elite-coupon", newerThan),
-      performScrapFor("https://www.oddschecker.com/football/other/poland/ekstraklasa", newerThan)
+      performScrapFor("https://www.oddschecker.com/football/other/poland/ekstraklasa", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/world-cup", newerThan)
     ).flatten
   }
 
