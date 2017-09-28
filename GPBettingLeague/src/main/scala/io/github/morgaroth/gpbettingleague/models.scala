@@ -40,6 +40,7 @@ object Universal {
     "Mainz" -> List("FSV Mainz 05", "Mainz 05"),
     "Man City" -> List("Manchester City"),
     "Man Utd" -> List("Manchester United"),
+    "Newcastle United" -> List("Newcastle"),
     "Northern Ireland" -> List("North. Ireland"),
     "Olympiacos" -> List("Olympiakos"),
     "Paris St Germain" -> List("Paris Saint Germain", "Paris St Germain", "Paris Saint-Germain"),
@@ -50,11 +51,12 @@ object Universal {
     "Stoke" -> List("Stoke City"),
     "Sporting CP" -> List("Sporting Lisbon"),
     "Swansea" -> List("Swansea City"),
-    "Termalica Nieciecza" -> List("Termalica BB Nieciecza", "Termalica Bruk-Bet Nieciecza"),
+    "Termalica Nieciecza" -> List("Termalica BB Nieciecza", "Termalica Bruk-Bet Nieciecza", "Termalica Bruk Bet Nieciecza"),
     "Tottenham Hotspur" -> List("Tottenham"),
     "West Ham" -> List("West Ham United"),
     "West Brom" -> List("West Bromwich Albion"),
     "Vitoria de Guimaraes" -> List("Vitoria Guimaraes"),
+    "Verona" -> List("Hellas Verona"),
     "Zulte-Waregem" -> List("Zulte Waregem"),
   )
 
