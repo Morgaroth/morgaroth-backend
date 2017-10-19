@@ -72,7 +72,6 @@ class GPBettingLeagueActor extends MorgarothActor {
 
   override def postStop() {
     super.postStop()
-    //    new Main(cfg).shutdown()
   }
 
   override def logSourceName = "GP Betting"
