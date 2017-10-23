@@ -70,6 +70,21 @@ case class RemoveEntry(jobName: String) extends CronCommands
 
 case class UpdateEntry(jobName: String, defStr: Option[String] = None, cmd: Option[String] = None) extends CronCommands
 
+/** Air Purifier commands */
+sealed trait AirPurifierCommands
+
+case object PowerOn extends AirPurifierCommands
+
+case object PowerOff extends AirPurifierCommands
+
+case object AirPurifierStatus extends AirPurifierCommands
+
+case class SetOperateMode(mode: String) extends AirPurifierCommands
+
+case class SetFavoriteLevel(level: Int) extends AirPurifierCommands
+
+case class SetLedBrightness(volume: String) extends AirPurifierCommands
+
 object Cmds {
   val commandManifests = SealedClasses.values[Commands]
 }
