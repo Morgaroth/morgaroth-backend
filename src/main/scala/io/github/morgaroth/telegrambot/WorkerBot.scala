@@ -43,8 +43,10 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
       context.become(working)
   }
 
+  val ALLOWED_USERS=Set(36792931, 84815764)
+
   def working: Receive = {
-    case u@NewUpdate(_, _, Update(_, m)) if m.from.id == 36792931 && m.chat.isPrvChat =>
+    case u@NewUpdate(_, _, Update(_, m)) if ALLOWED_USERS.contains(m.from.id) && m.chat.isPrvChat =>
       workingHandler(u)
     case u: NewUpdate =>
       log.error("Message from unknown author {}", u)
@@ -71,6 +73,7 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
           List("Make Selections for Tomorrow"),
           List("Make Selections"),
           List("GP Pass", "Spotify Pass"),
+          List("AP On", "AP Off"),
           List("Hide keyboard")
         )
       ))
@@ -91,6 +94,9 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
     case TextCommand("spotify password" | "spotify pass", (chat, _, _)) =>
       sender() ! chat.msg("Ok, now send me Your Spotify password")
       context.become(waitingForReply(pass => publish(SaveSpotifyCredentials(UserCredentials("Morgaroth", pass)))))
+
+    case TextCommand("ap on", _) => publish(PowerOn)
+    case TextCommand("ap off", _) => publish(PowerOff)
 
     case NoArgCommand("run_gp_betting_league_tomorrow", _) |
          TextCommand("run gp betting league for tomorrow" | "run gp tomorrow" | "make selections for tomorrow", _) =>

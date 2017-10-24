@@ -36,6 +36,10 @@ class AirPurifierIntegration(miioServiceUrl: String) extends Actor with ActorLog
 
   var currentAirPurifiers = List.empty[Device]
 
+  self ! RefreshPurifiersList
+
+  log.info(s"service api is $miioServiceUrl")
+
   override def receive = {
     case RefreshPurifiersList =>
       pipe(checkAvailableDevices()).pipeTo(self)
@@ -53,9 +57,11 @@ class AirPurifierIntegration(miioServiceUrl: String) extends Actor with ActorLog
 
     case AirPurifierStatus =>
 
-
     case EventLog(source, msg, _) =>
       log.info(s"Event: $source - $msg")
+
+    case unhandled =>
+      log.error("Unhandled message {} of class {}", unhandled, unhandled.getClass.getCanonicalName)
   }
 
   def power(state: String, dev: Device) = {
@@ -72,10 +78,14 @@ class AirPurifierIntegration(miioServiceUrl: String) extends Actor with ActorLog
       _ <- after(5.seconds, context.system.scheduler)(succ(1))
       devicesResp <- req(Get(s"$miioServiceUrl/devices"))
       devices <- Unmarshal(devicesResp).to[List[Device]]
+      _ = log.info(s"refreshed $devices")
     } yield DevicesList(devices)
   }
 
   def req(url: HttpRequest) = {
-    Http().singleRequest(url)
+    Http().singleRequest(url).map { resp =>
+      log.info(s"received response from ${url.uri}: $resp")
+      resp
+    }
   }
 }

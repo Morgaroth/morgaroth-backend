@@ -30,6 +30,7 @@ docker run --detach \
             --env GPBETTINGLEAGUE_PASSWORD \
             --env "MONGODB_URI=mongodb://172.17.0.1:28017" \
             --env "REMOTE_SELENIUM_SERVER=http://172.17.0.1:4444/wd/hub" \
+            --env "MIIO_SERVICE_URL=http://172.17.0.1:3000" \
             --publish 8888:8080 \
             --expose 8888 \
             morgarothserver:${VERSION}
