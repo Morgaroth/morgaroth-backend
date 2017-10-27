@@ -28,7 +28,7 @@ object Universal {
     "Genk" -> List("Racing Genk"),
     "Gijon" -> List("Sporting Gijon"),
     "Hamburg" -> List("Hamburger SV"),
-    "Hannover 96" -> List("Hannover 0.0"),
+    "Hannover 96" -> List("Hannover 0.0", "Hannover"),
     "Hull" -> List("Hull City"),
     "Inter Milan" -> List("Inter"),
     "Kolonia" -> List("FC Cologne", "FC Koln"),
