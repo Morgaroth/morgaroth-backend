@@ -100,13 +100,13 @@ class Main(cfg: Config)(implicit as: ActorSystem) extends MessagesPublisher {
       }.sum
       if (changes > 0) {
         val submit = gp.getSaveButton()
-        publishLog(s"Selections for round #${round.stripPrefix("http://bettingleaguegp.appspot.com/round.jsp?id=")} made.")
         submit.click()
         Option(ExpectedConditions.alertIsPresent()(driver)).foreach { _ =>
           driver.switchTo().alert().accept()
         }
+        publishLog(s"Selections for round #${round.stripPrefix("https://bettingleaguegp.appspot.com/round.jsp?id=")} made.\n$round")
       } else {
-        publishLog(s"No matches to make selections for round #${round.stripPrefix("http://bettingleaguegp.appspot.com/round.jsp?id=")}.")
+        publishLog(s"No matches to make selections for round #${round.stripPrefix("https://bettingleaguegp.appspot.com/round.jsp?id=")}.\n$round")
       }
     }
     driver.close()

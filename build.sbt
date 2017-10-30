@@ -1,10 +1,11 @@
 import sbt.Keys.mappings
+import scala.sys.process._
 
 name := "MorgarothServer"
 
 version := "1.0.1"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.3"
 
 val selenium = "3.3.1"
 val akka = "2.4.17"
