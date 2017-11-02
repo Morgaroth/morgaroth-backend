@@ -14,11 +14,11 @@ case class BotConfig(
                       botToken: String,
                       more: Option[Config]
                     ) {
-  def additional = more.getOrElse(ConfigFactory.empty())
+  def additional: Config = more.getOrElse(ConfigFactory.empty())
 }
 
 object TelegramIntegration extends ServiceManager {
-  override def initialize(ctx: MContext) = {
+  override def initialize(ctx: MContext): Unit = {
     ctx.system.actorOf(Props(new TelegramIntegration))
   }
 }
@@ -28,13 +28,12 @@ class TelegramIntegration extends Actor with ActorLogging with MessagesPublisher
 
   val sett: BotConfig = ConfigFactory.load.as[BotConfig]("telegram-bot")
 
-  val updatesProvider = context.actorOf(LongPoolingActor.props(sett.botName, sett.botToken), s"${sett.botName}-long-poll")
-  val worker = context.actorOf(WorkerBot.props(sett.additional))
+  private val updatesProvider = context.actorOf(LongPoolingActor.props(sett.botName, sett.botToken), s"${sett.botName}-long-poll")
+  private val worker = context.actorOf(WorkerBot.props(sett.additional))
 
-  val botActor = context.actorOf(BotActor.props(sett.botName, sett.botToken, updatesProvider, worker), s"${sett.botName}-bot")
+  private val botActor = context.actorOf(BotActor.props(sett.botName, sett.botToken, updatesProvider, worker), s"${sett.botName}-bot")
 
-  println(s"Telegram creds $sett")
-  override def receive = {
+  override def receive: Receive = {
     case EventLog(s, msg, _) =>
       botActor ! SendMessage(36792931, s"$s: $msg")
     case unhandled =>

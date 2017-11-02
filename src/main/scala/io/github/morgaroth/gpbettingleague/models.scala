@@ -1,22 +1,39 @@
 package io.github.morgaroth.gpbettingleague
 
+import com.typesafe.scalalogging.LazyLogging
 import org.joda.time.DateTime
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.openqa.selenium.{WebDriver, WebElement}
 
+import scala.io.Source
 import scala.language.implicitConversions
+import scala.util.Try
 
-object GPNames {
-  def apply(name: String, names: String*) = name :: name.toList
-}
-
-object OCNames {
-  def apply(name: String, names: String*) = name :: name.toList
-}
-
-object Universal {
+object Universal extends LazyLogging {
   // universal name -> ( GP names, OC names )
-  val data = Map(
+
+  private val originNamesMapping = Try {
+    Source.fromResource("gp_names.csv").getLines().toList.map { line =>
+      line.split(";").toList.filter(_.nonEmpty) match {
+        case "T" :: gpid :: gpName :: otherNames :: Nil =>
+          otherNames.split(",").toList.map(_ -> gpName).toMap
+        case "T" :: _ :: _ :: Nil => // no mapping here
+          Map.empty
+        case other =>
+          logger.warn(s"bad format of line $other")
+          Map.empty
+      }
+    }.foldLeft(Map.empty[String, String]) {
+      case (acc, elem) => acc ++ elem
+    }
+  }.recover {
+    case thr: Throwable =>
+      logger.error(s"error during loading original mapping file $thr")
+      Map.empty
+  }.get
+
+  // GP name -> other names
+  private val data = Map(
     "Ajax Amsterdam" -> List("Ajax"),
     "AS Roma" -> List("Roma"),
     "Atletico Madrid" -> List("Atlético Madrid", "Atletico de Madrid"),
@@ -60,7 +77,7 @@ object Universal {
     "Zulte-Waregem" -> List("Zulte Waregem"),
   )
 
-  val toUni = data.flatMap(x => x._2.map(_ -> x._1))
+  private val toUni = data.flatMap(x => x._2.map(_ -> x._1)) ++ originNamesMapping
 
   def gpUid(m: GpMatch) = s"${toUni.getOrElse(m.host, m.host)}:${toUni.getOrElse(m.guest, m.guest)}"
 
@@ -70,13 +87,13 @@ object Universal {
 
 case class GpMatch(hostsElem: WebElement, guestsElem: WebElement, start: DateTime, currentBetElem: WebElement) {
 
-  def host = hostsElem.getText
+  def host: String = hostsElem.getText
 
-  def guest = guestsElem.getText
+  def guest: String = guestsElem.getText
 
-  lazy val uId = Universal.gpUid(this)
+  lazy val uId: String = Universal.gpUid(this)
 
-  def currentResult = currentBetElem.getText
+  def currentResult: String = currentBetElem.getText
 
   override def toString = s"GPMatch($host:$guest ($currentResult) ${start.toString("dd MMM HH:mm")})"
 }
@@ -84,7 +101,7 @@ case class GpMatch(hostsElem: WebElement, guestsElem: WebElement, start: DateTim
 case class OCMatch(host: String, guest: String, hostBet: Double, drawBet: Double, guestBet: Double, start: DateTime) {
   lazy val id = s"$host:$guest"
 
-  lazy val uId = Universal.ocUid(this)
+  lazy val uId: String = Universal.ocUid(this)
 
   override def toString = s"OCMatch($host:$guest, ($hostBet,$drawBet,$guestBet) ${start.toString("dd MMM HH:mm")})"
 

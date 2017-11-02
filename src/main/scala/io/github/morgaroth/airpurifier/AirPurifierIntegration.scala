@@ -1,12 +1,12 @@
 package io.github.morgaroth.airpurifier
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.Props
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding._
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.pattern._
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, StreamTcpException}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.generic.auto._
 import io.github.morgaroth.airpurifier.AirPurifierIntegration.RefreshPurifiersList
@@ -15,6 +15,7 @@ import io.github.morgaroth.base._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.Failure
 
 object AirPurifierIntegration extends ServiceManager {
   override def initialize(ctx: MContext) = {
@@ -27,20 +28,20 @@ object AirPurifierIntegration extends ServiceManager {
 
 }
 
-class AirPurifierIntegration(miioServiceUrl: String) extends Actor with ActorLogging with FailFastCirceSupport {
+class AirPurifierIntegration(miioServiceUrl: String) extends MorgarothActor with FailFastCirceSupport {
   context.system.eventStream.subscribe(self, classOf[AirPurifierCommands])
 
-  import context.{dispatcher, system}
-
-  implicit val mat = ActorMaterializer.create(context.system)
+  implicit val mat: ActorMaterializer = ActorMaterializer.create(context.system)
 
   var currentAirPurifiers = List.empty[Device]
 
-  self ! RefreshPurifiersList
+  context.system.scheduler.schedule(2.seconds, 5.minutes, self, RefreshPurifiersList)
 
   log.info(s"service api is $miioServiceUrl")
 
-  override def receive = {
+  val hardSelf = self
+
+  override def receive: Receive = {
     case RefreshPurifiersList =>
       pipe(checkAvailableDevices()).pipeTo(self)
     case DevicesList(devices) =>
@@ -56,21 +57,36 @@ class AirPurifierIntegration(miioServiceUrl: String) extends Actor with ActorLog
     case SetFavoriteLevel(level) if level >= 0 && level <= 17 =>
 
     case AirPurifierStatus =>
-
+      currentAirPurifiers.foreach { dev =>
+        val resp =
+          s"""
+             |Power: ${dev.status.power}
+             |Speed: ${dev.status.motor1_speed}
+             |PM2: ${dev.status.aqi}µg/m3
+             |Wilgotność: ${dev.status.humidity}%
+             |Temperatura: ${dev.status.temp_dec / 10.0}°C
+        """.stripMargin
+        publishLog(resp)
+      }
     case EventLog(source, msg, _) =>
       log.info(s"Event: $source - $msg")
+
+    case Failure(t: StreamTcpException) if t.getMessage.contains("Połączenie odrzucone") =>
+      log.info("http-miio is missing in the network")
 
     case unhandled =>
       log.error("Unhandled message {} of class {}", unhandled, unhandled.getClass.getCanonicalName)
   }
 
-  def power(state: String, dev: Device) = {
-    req(Post(s"$miioServiceUrl/devices/${dev.ip}", StrTask("power", state)))
+  private def power(state: String, dev: Device) = {
+    req(Post(s"$miioServiceUrl/devices/${dev.ip}", StrTask("power", state))).andThen {
+      case _ => hardSelf ! RefreshPurifiersList
+    }
   }
 
-  def powerOn(dev: Device) = power("on", dev)
+  private def powerOn(dev: Device) = power("on", dev)
 
-  def powerOff(dev: Device) = power("off", dev)
+  private def powerOff(dev: Device) = power("off", dev)
 
   def checkAvailableDevices(): Future[DevicesList] = {
     for {
@@ -82,10 +98,12 @@ class AirPurifierIntegration(miioServiceUrl: String) extends Actor with ActorLog
     } yield DevicesList(devices)
   }
 
-  def req(url: HttpRequest) = {
+  private def req(url: HttpRequest) = {
     Http().singleRequest(url).map { resp =>
       log.info(s"received response from ${url.uri}: $resp")
       resp
     }
   }
+
+  override val logSourceName = "AirPurifier"
 }

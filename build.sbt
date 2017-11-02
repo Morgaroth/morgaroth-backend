@@ -60,6 +60,7 @@ val root = (project in file("."))
       "org.reflections" % "reflections" % "0.9.11",
       "ru.yandex.qatools.ashot" % "ashot" % "1.5.3",
       "ch.qos.logback" % "logback-classic" % "1.1.6",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
       "de.heikoseeberger" %% "akka-http-circe" % "1.18.0",
       "de.heikoseeberger" %% "akka-http-json4s" % "1.15.0",
       "de.heikoseeberger" %% "akka-http-json4s" % "1.15.0",

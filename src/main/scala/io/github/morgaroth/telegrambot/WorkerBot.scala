@@ -73,7 +73,7 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
           List("Make Selections for Tomorrow"),
           List("Make Selections"),
           List("GP Pass", "Spotify Pass"),
-          List("AP On", "AP Off"),
+          List("AP On", "AP Off", "AP Status"),
           List("Hide keyboard")
         )
       ))
@@ -97,6 +97,7 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
 
     case TextCommand("ap on", _) => publish(PowerOn)
     case TextCommand("ap off", _) => publish(PowerOff)
+    case TextCommand("ap status", _) => publish(AirPurifierStatus)
 
     case NoArgCommand("run_gp_betting_league_tomorrow", _) |
          TextCommand("run gp betting league for tomorrow" | "run gp tomorrow" | "make selections for tomorrow", _) =>

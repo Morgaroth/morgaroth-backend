@@ -3,8 +3,8 @@ package io.github.morgaroth.gpbettingleague
 import akka.actor.Props
 import com.typesafe.config.ConfigFactory
 import io.github.morgaroth.base._
-import org.joda.time.DateTime
 import net.ceedubs.ficus.Ficus._
+import org.joda.time.DateTime
 
 object GPBettingLeagueActor extends ServiceManager {
   override def initialize(ctx: MContext): Unit = {
@@ -15,15 +15,15 @@ object GPBettingLeagueActor extends ServiceManager {
 class GPBettingLeagueActor extends MorgarothActor {
   subscribe(classOf[GPBettingCommands])
 
-  var creds: Option[UserCredentials] = None
+  private var creds: Option[UserCredentials] = None
 
-  val cfg = ConfigFactory.load().getConfig("gp-betting-league")
+  private val cfg = ConfigFactory.load().getConfig("gp-betting-league")
 
   (cfg.as[Option[String]]("username") zip cfg.as[Option[String]]("password")).foreach {
     case (username, pass) => self ! SaveGPCredentials(UserCredentials(username, pass))
   }
 
-  override def receive = {
+  override def receive: Receive = {
     case RunGPBettingLeague(Some(credentials: UserCredentials), _, timeBarrier) =>
       new Main(cfg).run(credentials, timeBarrier)
       creds = Some(credentials)
