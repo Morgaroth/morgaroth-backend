@@ -81,6 +81,10 @@ class LongPoolingActor(botName: String, val botToken: String) extends Actor with
       log.warning(s"for bot $botName another response $response")
       dispatchPoll()
 
+    case Failure(_: WebhookConflict) =>
+      log.warning("bot is locked by another instance, next try in an hour")
+      context.system.scheduler.scheduleOnce(1.hour, self, Poll)
+
     case Failure(ex) =>
       log.error(ex, s"pooling bot $botName end with exception")
       dispatchPoll()
