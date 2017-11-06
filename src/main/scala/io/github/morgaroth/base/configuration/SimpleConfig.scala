@@ -18,7 +18,11 @@ trait SimpleConfig {
 
   def getStringArray(key: String): Future[Set[String]]
 
+  def getIntArray(key: String): Future[Set[Int]]
+
   def appendToStringArray(key: String, value: String): Future[Set[String]]
+
+  def appendToIntArray(key: String, value: Int): Future[Set[Int]]
 
   def removeFromStringArray(key: String, value: String): Future[Unit]
 
@@ -58,6 +62,13 @@ class InMemoryConfig extends SimpleConfig {
     updated
   }
 
+  override def appendToIntArray(key: String, value: Int): Future[Set[Int]] = {
+    val prev = data.get(key).map(_.asInstanceOf[Set[Int]]).getOrElse(Set.empty)
+    val updated = prev + value
+    data.update(key, updated)
+    updated
+  }
+
   override def removeFromStringArray(key: String, value: String): Future[Unit] = {
     val prev = data.get(key).map(_.asInstanceOf[Set[String]]).getOrElse(Set.empty)
     val updated = prev - value
@@ -66,4 +77,6 @@ class InMemoryConfig extends SimpleConfig {
   }
 
   override def getAllKeys: Future[Set[String]] = wrap(data.keySet.toSet)
+
+  override def getIntArray(key: String): Future[Set[Int]] = get[Set[Int]](key)
 }

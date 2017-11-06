@@ -1,7 +1,9 @@
 package io.github.morgaroth.base
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem}
 import akka.event.LoggingAdapter
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Created by PRV on 06.05.2017.
@@ -9,11 +11,11 @@ import akka.event.LoggingAdapter
 trait MorgarothActor extends Actor with ActorLogging with MessagesPublisher {
 
   implicit val implicitLogger: LoggingAdapter = log
-  implicit val implicitExecContext = context.system.dispatcher
-  implicit val implicitActorSystem = context.system
+  implicit val implicitExecContext: ExecutionContext = context.system.dispatcher
+  implicit val implicitActorSystem: ActorSystem = context.system
 
-  def subscribe(channel: Class[_])(implicit s: ActorRef) =
+  def subscribe(channel: Class[_])(implicit s: ActorRef): Boolean =
     context.system.eventStream.subscribe(s, channel)
 
-  val selfie = self
+  val hardSelf: ActorRef = self
 }

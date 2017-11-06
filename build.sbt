@@ -1,4 +1,6 @@
 import sbt.Keys.mappings
+
+import scala.language.postfixOps
 import scala.sys.process._
 
 name := "MorgarothServer"
@@ -79,5 +81,23 @@ val root = (project in file("."))
     maintainer := "Mateusz Jaje <mateuszjaje@gmail.com",
     mainClass in Compile := Some("io.github.morgaroth.app.App"),
     mappings in(Compile, packageBin) ++= mappings.in(macros, Compile, packageBin).value,
-    mappings in(Compile, packageSrc) ++= mappings.in(macros, Compile, packageSrc).value
+    mappings in(Compile, packageSrc) ++= mappings.in(macros, Compile, packageSrc).value,
+    initialCommands +=
+      """
+        |import org.openqa.selenium.WebDriver
+        |import org.openqa.selenium.chrome.ChromeDriver
+        |import org.openqa.selenium.Cookie
+        |import io.github.morgaroth.gpbettingleague.Driver
+        |import io.github.morgaroth.base.UserCredentials
+        |import org.joda.time.{DateTime, LocalTime}
+        |
+        |import io.github.morgaroth.gpbettingleague._
+        |import xpath._
+        |
+        |System.setProperty("webdriver.chrome.driver","/opt/chromedriver")
+        |implicit val driver: WebDriver = new ChromeDriver()
+        |
+        |val seleniumHelpers = new Selenium {}
+        |import seleniumHelpers._
+      """.stripMargin,
   ).settings(DockerConfig.settings: _*)

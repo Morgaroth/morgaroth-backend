@@ -1,6 +1,7 @@
 package io.github.morgaroth.airpurifier
 
 import akka.actor.Props
+import akka.actor.Status.Failure
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.client.RequestBuilding._
 import akka.http.scaladsl.model.HttpRequest
@@ -10,15 +11,13 @@ import akka.stream.{ActorMaterializer, StreamTcpException}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.generic.auto._
 import io.github.morgaroth.airpurifier.AirPurifierIntegration.RefreshPurifiersList
-import io.github.morgaroth.base.FutureHelpers._
 import io.github.morgaroth.base._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Failure
 
 object AirPurifierIntegration extends ServiceManager {
-  override def initialize(ctx: MContext) = {
+  override def initialize(ctx: MContext): Unit = {
     ctx.system.actorOf(Props(new AirPurifierIntegration(
       miioServiceUrl = ctx.staticCfg.getString("miio.serviceUrl")
     )))
@@ -35,11 +34,9 @@ class AirPurifierIntegration(miioServiceUrl: String) extends MorgarothActor with
 
   var currentAirPurifiers = List.empty[Device]
 
-  context.system.scheduler.schedule(2.seconds, 5.minutes, self, RefreshPurifiersList)
+  context.system.scheduler.schedule(2.seconds, 5.seconds, self, RefreshPurifiersList)
 
   log.info(s"service api is $miioServiceUrl")
-
-  val hardSelf = self
 
   override def receive: Receive = {
     case RefreshPurifiersList =>
@@ -68,8 +65,6 @@ class AirPurifierIntegration(miioServiceUrl: String) extends MorgarothActor with
         """.stripMargin
         publishLog(resp)
       }
-    case EventLog(source, msg, _) =>
-      log.info(s"Event: $source - $msg")
 
     case Failure(t: StreamTcpException) if t.getMessage.contains("Połączenie odrzucone") =>
       log.info("http-miio is missing in the network")
@@ -90,17 +85,15 @@ class AirPurifierIntegration(miioServiceUrl: String) extends MorgarothActor with
 
   def checkAvailableDevices(): Future[DevicesList] = {
     for {
-      _ <- req(Patch(s"$miioServiceUrl/refresh"))
-      _ <- after(5.seconds, context.system.scheduler)(succ(1))
       devicesResp <- req(Get(s"$miioServiceUrl/devices"))
       devices <- Unmarshal(devicesResp).to[List[Device]]
-      _ = log.info(s"refreshed $devices")
+//      _ = log.info(s"refreshed $devices")
     } yield DevicesList(devices)
   }
 
   private def req(url: HttpRequest) = {
     Http().singleRequest(url).map { resp =>
-      log.info(s"received response from ${url.uri}: $resp")
+//      log.info(s"received response from ${url.uri}: $resp")
       resp
     }
   }

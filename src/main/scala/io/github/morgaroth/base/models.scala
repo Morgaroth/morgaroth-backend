@@ -36,6 +36,10 @@ case object RunGPBettingLeagueTomorrowPreviousPass extends GPBettingCommands
 
 case class SaveGPCredentials(creds: UserCredentials) extends GPBettingCommands
 
+case object UpdateClosedRoundsKnowledge extends GPBettingCommands
+
+case object GetLastRoundResult extends GPBettingCommands
+
 /** Photo Manager models */
 
 sealed trait PhotoManagerCommands extends Commands

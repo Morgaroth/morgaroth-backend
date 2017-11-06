@@ -38,7 +38,7 @@ class SpotifyRipperActor(ctx: ConfigProvider) extends MorgarothActor {
       "--play-token-resume=5m", ent.uri)
     log.info(s"ripping command is ${cmd.mkString(" ").replaceAllLiterally(pass, "*" * pass.length)}")
     Future(cmd.lineStream.filterNot(_.contains("Progress: [")).filterNot(_.contains("Total: [")).map(_.drop(5).dropRight(5)).map { l =>
-      if (l.contains(".mp3") && l.startsWith(outputDir)) selfie ! Ripped(File(l).name)
+      if (l.contains(".mp3") && l.startsWith(outputDir)) hardSelf ! Ripped(File(l).name)
       l
     }.toList)
   }
@@ -47,9 +47,9 @@ class SpotifyRipperActor(ctx: ConfigProvider) extends MorgarothActor {
     currentTask = rip(uri, lastCreds.get.user, lastCreds.get.password)
     currentTask.onComplete {
       case Success(_) => log.warning(s"Ripping ended.")
-        selfie ! RippingDone
+        hardSelf ! RippingDone
       case Failure(thr) =>
-        selfie ! RippingDone
+        hardSelf ! RippingDone
         log.error(thr, "Ripping ended with exception.")
     }
     publishLog("Ripping started.")

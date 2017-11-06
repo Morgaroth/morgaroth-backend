@@ -18,8 +18,8 @@ import scala.language.implicitConversions
   */
 trait Selenium {
 
-  val go = new {
-    def to(url: String)(implicit webDriver: Driver) = {
+  object go {
+    def to(url: String)(implicit webDriver: Driver): Unit = {
       webDriver.navigate.to(url)
     }
   }
@@ -27,7 +27,7 @@ trait Selenium {
   implicit def convertToby(s: String): By = By.xpath(s)
 
   //  def currentUrl(implicit wd:WebDriver) = {}
-  def currentUrl(implicit wd: Driver) = {
+  def currentUrl(implicit wd: Driver): String = {
     wd.getCurrentUrl
   }
 
@@ -46,17 +46,13 @@ trait Selenium {
   }
 
 
-  implicit def wrapToXpathable(we: WebElement): {
-    def /(xpath: String): WebElement
-
-    def /+(xpath: String): List[WebElement]
-  } = new {
-    def /+(xpath: String) = {
+  implicit class WrapToXpathable(we: WebElement) {
+    def /+(xpath: String): List[WebElement] = {
       import scala.collection.JavaConverters._
       we.findElements(xpath).asScala.toList
     }
 
-    def /(xpath: String) = {
+    def /(xpath: String): WebElement = {
       import scala.collection.JavaConverters._
       val res = we.findElements(xpath).asScala
       if (res.size > 1) {
@@ -64,7 +60,6 @@ trait Selenium {
       }
       res.head
     }
-
   }
 
   def highlight(e: WebElement)(implicit driver: Driver) {

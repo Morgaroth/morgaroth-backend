@@ -107,6 +107,7 @@ case class OCMatch(host: String, guest: String, hostBet: Double, drawBet: Double
 
 }
 
+case class GpRoundResult(place: Int, points: Int, bonus: Int, player: String, roundId:Int)
 
 case class Driver(wd: WebDriver, wdw: WebDriverWait)
 

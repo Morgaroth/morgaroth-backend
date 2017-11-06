@@ -41,7 +41,7 @@ class InternalCron(cfg: SimpleConfig) extends MorgarothActor {
   cfg.getStringArray(jobsCfgKey).recover {
     case _: NoSuchElementException => log.info("No jobs in crontab."); Nil
   }.onComplete {
-    case Success(keys) => keys.foreach { cmd => context.system.scheduler.scheduleOnce(10.seconds, selfie, Check(jobCfgKey(cmd))) }
+    case Success(keys) => keys.foreach { cmd => context.system.scheduler.scheduleOnce(10.seconds, hardSelf, Check(jobCfgKey(cmd))) }
     case Failure(thr) => log.error(thr, "Requesting all jobs from configuration end with exception {}", thr.getMessage)
   }
 
@@ -83,7 +83,7 @@ class InternalCron(cfg: SimpleConfig) extends MorgarothActor {
           case Success(_) => publishLog(s"Crontab entry for $name added.")
           case Failure(thr) => publishLog(s"Adding crontab entry for $name failed with error ${thr.getMessage}.")
         }
-        _ = selfie ! Check(jobCfgKey(name))
+        _ = hardSelf ! Check(jobCfgKey(name))
         _ = sendToClient("CrontabEntryAdded")
       } yield ()
     case UpdateEntry(name, None, None) =>
