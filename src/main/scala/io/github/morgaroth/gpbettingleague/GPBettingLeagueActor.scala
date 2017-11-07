@@ -75,8 +75,8 @@ class GPBettingLeagueActor(db: BettingDB) extends MorgarothActor {
 
     case UpdateClosedRoundsKnowledge =>
       try {
-        val action = withRunner { runner =>
-          for {
+        withRunner { runner =>
+          val action = for {
             knownRounds <- db.getRoundsKnownList
             rounds = runner.scrapRounds(creds.get)
             missingRounds = rounds.toSet -- knownRounds
@@ -96,8 +96,8 @@ class GPBettingLeagueActor(db: BettingDB) extends MorgarothActor {
               }
             }
           } yield results
+          Await.result(action, 5.minutes)
         }
-        Await.result(action, 5.minutes)
       } catch {
         case t: Throwable =>
           t.printStackTrace()
@@ -138,11 +138,10 @@ class GPBettingLeagueActor(db: BettingDB) extends MorgarothActor {
 
   def withRunner[T](fn: Main => T) = {
     val runner = new Main(cfg)
-    val session = driver.getSessionId
-    log.info(s"starting session $session")
     val result = fn(runner)
-    log.info(s"stopping session $session")
-    //    driver.quit()
+    if (result.isInstanceOf[Future[_]]) {
+      log.warning("withRunner function should not return Future")
+    }
     result
   }
 

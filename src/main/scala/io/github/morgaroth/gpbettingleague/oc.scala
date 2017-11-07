@@ -77,7 +77,8 @@ object oc extends Selenium {
       performScrapFor("https://www.oddschecker.com/football/elite-coupon", newerThan),
       performScrapFor("https://www.oddschecker.com/football/other/poland/ekstraklasa", newerThan),
       performScrapFor("https://www.oddschecker.com/football/world-cup", newerThan),
-      performScrapFor("https://www.oddschecker.com/football/italy/serie-a", newerThan)
+      performScrapFor("https://www.oddschecker.com/football/italy/serie-a", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/international-friendlies", newerThan),
     ).flatten
   }
 

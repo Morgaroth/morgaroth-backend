@@ -3,6 +3,7 @@ package io.github.morgaroth.gpbettingleague
 import io.github.morgaroth.base.UserCredentials
 import io.github.morgaroth.gpbettingleague.xpath._
 import org.joda.time.{DateTime, LocalTime}
+import org.openqa.selenium.support.ui
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.{By, WebElement}
 
@@ -25,10 +26,10 @@ object gp extends Selenium {
 
   def getActiveRounds()(implicit driver: Driver): List[String] = {
     import scala.collection.JavaConverters._
-    driver.until(ExpectedConditions.not(ExpectedConditions.textToBePresentInElementLocated(By.id("side-menu-running"), "Loading...")))
-    findElement(By.id("side-menu-running"))
-      .findElements(x".//a[starts-with(@href, 'round.jsp')]")
-      .asScala.toList
+    driver.until(
+      ExpectedConditions.presenceOfElementLocated(x"//ul[@data-type='side-menu-month']")
+    )
+    findElements(x"//ul[@data-type='side-menu-month']//li[contains(@class, 'green-highlight')]//a[starts-with(@href, 'round.jsp')]")
       .map(_.getAttribute("href"))
   }
 
@@ -51,6 +52,9 @@ object gp extends Selenium {
   }
 
   def getCompletedRounds()(implicit wd: Driver): List[Int] = {
+    wd.until(
+      ExpectedConditions.presenceOfElementLocated(x"//ul[@data-type='side-menu-month']")
+    )
     var elements: List[String] = null
     do {
       elements = findElements(x"//ul[@data-type='side-menu-month']//li[not(contains(@class, 'green-highlight'))]//a").map(_.getText).filter(_.nonEmpty).map(_.stripPrefix("#"))
