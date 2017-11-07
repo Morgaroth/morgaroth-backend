@@ -10,6 +10,8 @@ import scala.util.Try
 
 object gp extends Selenium {
 
+  def loginToGPBettingLeague(login: String, password: String)(implicit wd: Driver): Unit = loginToGPBettingLeague(UserCredentials(login, password))
+
   def loginToGPBettingLeague(creds: UserCredentials)(implicit wd: Driver): Unit = {
     go to "https://bettingleaguegp.appspot.com"
     if (currentUrl == "https://bettingleaguegp.appspot.com/login.jsp") {
@@ -51,7 +53,7 @@ object gp extends Selenium {
   def getCompletedRounds()(implicit wd: Driver): List[Int] = {
     var elements: List[String] = null
     do {
-      elements = findElements(x"//ul[@id='side-menu-completed']//a").map(_.getText).filter(_.nonEmpty).map(_.stripPrefix("#"))
+      elements = findElements(x"//ul[@data-type='side-menu-month']//li[not(contains(@class, 'green-highlight'))]//a").map(_.getText).filter(_.nonEmpty).map(_.stripPrefix("#"))
       println(s"elements are $elements")
     } while (elements.contains("Loading...") || elements.isEmpty)
     println(s"raw scrapped $elements")
