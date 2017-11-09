@@ -1,6 +1,6 @@
 package io.github.morgaroth.phonefetcher
 
-import akka.actor.Props
+import akka.actor.{Cancellable, Props}
 import akka.event.Logging
 import better.files._
 import io.github.morgaroth.Directories
@@ -11,7 +11,7 @@ import scala.language.postfixOps
 import scala.sys.process._
 
 object PhonePhotosFetcher extends ServiceManager {
-  override def initialize(ctx: MContext) = {
+  override def initialize(ctx: MContext): Unit = {
     if (ctx.staticCfg.getBoolean("photos-manager.enabled")) {
       ctx.system.actorOf(Props(new PhonePhotosFetcher(ctx)))
     } else {
@@ -24,13 +24,13 @@ object PhonePhotosFetcher extends ServiceManager {
 class PhonePhotosFetcher(ctx: ConfigProvider) extends MorgarothActor {
   context.system.eventStream.subscribe(self, classOf[PhotoManagerCommands])
 
-  val userId = "id -u".!!.trim.replace("\"", "").toInt
+  val userId: Int = "id -u".!!.trim.replace("\"", "").toInt
 
   log.info(s"userId is $userId")
 
-  def checkPhone() = context.system.scheduler.scheduleOnce(2.seconds, self, CheckPhoneConnected())
+  def checkPhone(): Cancellable = context.system.scheduler.scheduleOnce(2.seconds, self, CheckPhoneConnected())
 
-  def checkEHDrive() = context.system.scheduler.scheduleOnce(2.seconds, self, CheckExternalDriveConnected())
+  def checkEHDrive(): Cancellable = context.system.scheduler.scheduleOnce(2.seconds, self, CheckExternalDriveConnected())
 
 
   val tmpStore = better.files.File(ctx.staticCfg.getString("photos-manager.tmp-files-directory"))
@@ -38,7 +38,7 @@ class PhonePhotosFetcher(ctx: ConfigProvider) extends MorgarothActor {
     log.error(s"$tmpStore is a file, cannot store there any files")
   } else if (!tmpStore.exists) tmpStore.createDirectories()
 
-  override def receive = {
+  override def receive: Receive = {
     case CheckPhoneConnected() =>
       val dirs = file"/run/user/$userId/gvfs/".list.filter(_.name.startsWith("mtp:")).flatMap(_.list)
       if (dirs.nonEmpty) {

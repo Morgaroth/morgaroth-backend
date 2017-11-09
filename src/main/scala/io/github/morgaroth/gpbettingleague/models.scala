@@ -107,7 +107,13 @@ case class OCMatch(host: String, guest: String, hostBet: Double, drawBet: Double
 
 }
 
-case class GpRoundResult(place: Int, points: Int, bonus: Int, player: String, roundId:Int)
+case class GpRoundResult(place: Int, points: Int, bonus: Int, player: String, roundId: Int){
+  def userResult: String = if(place < Int.MaxValue) place.toString else s"not participated"
+}
+
+object GpRoundResult {
+  def empty(user: String, roundId: Int) = new GpRoundResult(Int.MaxValue, 0, 0, user, roundId)
+}
 
 case class Driver(wd: WebDriver, wdw: WebDriverWait)
 

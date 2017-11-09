@@ -33,7 +33,7 @@ class GPBettingLeagueActor(db: BettingDB) extends MorgarothActor {
 
   context.system.scheduler.schedule(2.seconds, 6.hours, self, UpdateClosedRoundsKnowledge)
 
-  implicit lazy val driver: RemoteWebDriver = if (cfg.hasPath("remote-server")) {
+  def getDriver(): RemoteWebDriver = if (cfg.hasPath("remote-server")) {
     log.info(s"running with remote server on ${cfg.getString("remote-server")}")
     new RemoteWebDriver(new URL(cfg.getString("remote-server")), DesiredCapabilities.chrome)
   } else {
@@ -53,7 +53,7 @@ class GPBettingLeagueActor(db: BettingDB) extends MorgarothActor {
 
   override def receive: Receive = {
     case RunGPBettingLeague(Some(credentials: UserCredentials), _, timeBarrier) =>
-      new Main(cfg).run(credentials, timeBarrier)
+      withRunner(_.run(credentials, timeBarrier))
       creds = Some(credentials)
       publishLog("Selections made.")
 
@@ -81,18 +81,14 @@ class GPBettingLeagueActor(db: BettingDB) extends MorgarothActor {
             rounds = runner.scrapRounds(creds.get)
             missingRounds = rounds.toSet -- knownRounds
             _ = log.info(s"known rounds are $knownRounds, scrapped are $rounds")
-            results <- missingRounds.toList.foldLeft(Future.successful(List.empty[Option[GpRoundResult]])) { case (accF, roundId) =>
+            results <- missingRounds.toList.foldLeft(Future.successful(List.empty[GpRoundResult])) { case (accF, roundId) =>
               accF.flatMap { acc =>
-                val roundResult = runner.getResultsOfRound(roundId, creds.get)
-                  .find(_.player == creds.get.user)
-                  .map { userResult =>
-                    for {
-                      _ <- db.saveRound(userResult)
-                      _ <- db.markRoundAsKnown(roundId)
-                      _ = publishLog(s"Your result in round #$roundId is ${userResult.place}.")
-                    } yield Some(userResult)
-                  }.getOrElse(Future.successful(None))
-                roundResult.map(_ :: acc)
+                val roundResult = runner.getResultsOfRound(roundId, creds.get).find(_.player == creds.get.user).getOrElse(GpRoundResult.empty(creds.get.user, roundId))
+                (for {
+                  _ <- db.saveRound(roundResult)
+                  _ <- db.markRoundAsKnown(roundId)
+                  _ = publishLog(s"Your result in round #$roundId is ${roundResult.userResult}.")
+                } yield roundResult).map(_ :: acc)
               }
             }
           } yield results
@@ -136,18 +132,19 @@ class GPBettingLeagueActor(db: BettingDB) extends MorgarothActor {
       publishLog("No previous password for automatic Tomorrow betting.")
   }
 
-  def withRunner[T](fn: Main => T) = {
-    val runner = new Main(cfg)
+  def withRunner[T](fn: Main => T): T = {
+    val driver = getDriver()
+    val runner = new Main(cfg, driver)
     val result = fn(runner)
     if (result.isInstanceOf[Future[_]]) {
       log.warning("withRunner function should not return Future")
     }
+    driver.quit()
     result
   }
 
   override def postStop() {
     super.postStop()
-    driver.quit()
   }
 
   override def logSourceName = "GP Betting"

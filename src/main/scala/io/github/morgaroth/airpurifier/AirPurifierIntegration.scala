@@ -8,6 +8,7 @@ import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.pattern._
 import akka.stream.{ActorMaterializer, StreamTcpException}
+import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.generic.auto._
 import io.github.morgaroth.airpurifier.AirPurifierIntegration.RefreshPurifiersList
@@ -16,11 +17,13 @@ import io.github.morgaroth.base._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-object AirPurifierIntegration extends ServiceManager {
+object AirPurifierIntegration extends ServiceManager with LazyLogging {
   override def initialize(ctx: MContext): Unit = {
-    ctx.system.actorOf(Props(new AirPurifierIntegration(
-      miioServiceUrl = ctx.staticCfg.getString("miio.serviceUrl")
-    )))
+    if (ctx.staticCfg.getBoolean("air-purifier.enabled")) {
+      ctx.system.actorOf(Props(new AirPurifierIntegration(
+        miioServiceUrl = ctx.staticCfg.getString("air-purifier.miio.serviceUrl")
+      )))
+    } else logger.info("AirPurifierIntegration disabled in config file.")
   }
 
   case object RefreshPurifiersList
@@ -67,7 +70,7 @@ class AirPurifierIntegration(miioServiceUrl: String) extends MorgarothActor with
       }
 
     case Failure(t: StreamTcpException) if t.getMessage.contains("Połączenie odrzucone") =>
-      log.info("http-miio is missing in the network")
+    //      log.info("http-miio is missing in the network")
 
     case unhandled =>
       log.error("Unhandled message {} of class {}", unhandled, unhandled.getClass.getCanonicalName)
@@ -87,13 +90,13 @@ class AirPurifierIntegration(miioServiceUrl: String) extends MorgarothActor with
     for {
       devicesResp <- req(Get(s"$miioServiceUrl/devices"))
       devices <- Unmarshal(devicesResp).to[List[Device]]
-//      _ = log.info(s"refreshed $devices")
+      //      _ = log.info(s"refreshed $devices")
     } yield DevicesList(devices)
   }
 
   private def req(url: HttpRequest) = {
     Http().singleRequest(url).map { resp =>
-//      log.info(s"received response from ${url.uri}: $resp")
+      //      log.info(s"received response from ${url.uri}: $resp")
       resp
     }
   }

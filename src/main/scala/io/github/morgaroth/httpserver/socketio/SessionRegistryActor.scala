@@ -12,7 +12,7 @@ class SessionRegistryActor(props: SocketIOSessionHandler) extends Actor with Act
 
   import SessionRegistryActor._
 
-  implicit val materializer = ActorMaterializer()
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   override def postStop(): Unit = {
     log.error("!!SessionRegistryActor DIE!!")
@@ -42,7 +42,7 @@ class SessionRegistryActor(props: SocketIOSessionHandler) extends Actor with Act
                   actor ! PoisonPill
                 }
 
-                def receive = {
+                def receive: Receive = {
                   case msg => actor.tell(msg, out)
                 }
               }))

@@ -13,8 +13,10 @@ import org.openqa.selenium.support.ui.ExpectedConditions
 
 import scala.language.implicitConversions
 
-class Main(cfg: Config)(implicit as: ActorSystem, driver: Driver) extends MessagesPublisher with LazyLogging {
+class Main(cfg: Config, driver: RemoteWebDriver)(implicit as: ActorSystem) extends MessagesPublisher with LazyLogging {
   override def logSourceName: String = "GP Betting Runner"
+
+  implicit val implicitlyVisibleDriver: RemoteWebDriver = driver
 
   def scrapRounds(creds: UserCredentials): List[Int] = {
     gp.loginToGPBettingLeague(creds)
@@ -49,23 +51,30 @@ class Main(cfg: Config)(implicit as: ActorSystem, driver: Driver) extends Messag
           logger.info(s"      Draw: ${ocMatch.drawBet}")
           logger.info(s"      ${ocMatch.guest}: ${ocMatch.guestBet}")
           val targetScore = oddsToScore(ocMatch.hostBet, ocMatch.guestBet)
-          val score = s"${targetScore._1}:${targetScore._2}"
-          logger.info(s"      Forecast $score")
-          if (gpMatch.currentResult != "-:-") {
-            gpMatch.currentBetElem.click()
-          }
-          gp.highlight(gpMatch.hostsElem)
-          gpMatch.hostsElem.click()
-          for (_ <- 0 until targetScore._1) {
+          val forecast = s"${targetScore._1}:${targetScore._2}"
+          logger.info(s"      Forecast $forecast")
+          val previousSelection = gpMatch.currentResult
+          if (previousSelection != forecast) {
+            if (previousSelection != "-:-") {
+              logger.info(s"      Updating from '$previousSelection' to '$forecast'.")
+              gpMatch.currentBetElem.click()
+            }
+            gp.highlight(gpMatch.hostsElem)
             gpMatch.hostsElem.click()
-            Thread.sleep(500)
+            for (_ <- 0 until targetScore._1) {
+              gpMatch.hostsElem.click()
+              Thread.sleep(500)
+            }
+            for (_ <- 0 until targetScore._2) {
+              gpMatch.guestsElem.click()
+              Thread.sleep(500)
+            }
+            publishLog(s"Selection for match ${gpMatch.host}:${gpMatch.guest}: $forecast")
+            1
+          } else {
+            logger.info(s"      Forecast is the same as previous.")
+            0
           }
-          for (_ <- 0 until targetScore._2) {
-            gpMatch.guestsElem.click()
-            Thread.sleep(500)
-          }
-          publishLog(s"Selection for match ${gpMatch.host}:${gpMatch.guest}: $score")
-          1
         } getOrElse {
           val possible = ocBets.filter(b => b._1.contains(gpMatch.guest.take(5)) || b._1.contains(gpMatch.host.take(5))).toList
           logger.info(s"\tNo match for ${gpMatch.host} vs ${gpMatch.guest} at (${gpMatch.start.toString("dd MMM HH:mm")}).")
