@@ -412,3 +412,11 @@ case class GetUserProfilePhotos(
 case class GetFile(
                     file_id: String
                   ) extends Command
+
+/**
+  * https://core.telegram.org/bots/api#deletemessage
+  */
+case class DeleteMessage(
+                          chat_id: Int,
+                          message_id: Int
+                        ) extends Command

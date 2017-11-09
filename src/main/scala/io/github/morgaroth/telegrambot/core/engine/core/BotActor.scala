@@ -3,12 +3,14 @@ package io.github.morgaroth.telegrambot.core.engine.core
 import java.util.UUID
 
 import akka.actor._
+import akka.stream.ActorMaterializer
 import io.github.morgaroth.telegrambot.core.api.methods.{Methods, Response}
-import io.github.morgaroth.telegrambot.core.api.models.{Chat, Command, File, ForwardMessage, GetFile, GetUserProfilePhotos, SendChatAction, SendDocument, SendLocation, SendMessage, SendPhoto, User}
+import io.github.morgaroth.telegrambot.core.api.models.{Chat, Command, DeleteMessage, File, ForwardMessage, GetFile, GetUserProfilePhotos, SendChatAction, SendDocument, SendLocation, SendMessage, SendPhoto, User}
 import io.github.morgaroth.telegrambot.core.engine._
 import io.github.morgaroth.telegrambot.core.engine.core.BotActor._
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.language.{implicitConversions, reflectiveCalls}
 import scala.util.{Failure, Success, Try}
 
@@ -59,11 +61,17 @@ class BotActor(botName: String, val botToken: String, updatesActor: ActorRef, wo
   implicit def wrapIntoLoggable[T](f: Future[Response[T]]): Object {def logoutResult: Future[Response[T]]} = new {
     def logoutResult = {
       f.onComplete {
-        //        case Success(result) =>
-        //          log.info(s"request end with $result")
+        case Success(_) =>
+        // log.info(s"request end with $result")
+        case Failure(t: UnsuccessfulResponseException) =>
+          t.resp.entity.toStrict(5.seconds).map(_.data.decodeString("utf-8")).onComplete {
+            case Success(someData) => log.error(s"invalid response ent $someData response ${t.resp}")
+            case Failure(thr) => log.error(thr, "invalid response")
+          }
         case Failure(t) =>
           log.error(t, "error during executing request")
-        case _ =>
+        case wtf =>
+          log.error(s"WTF unhandled in logout result method $wtf")
       }
       f
     }
@@ -128,6 +136,7 @@ class BotActor(botName: String, val botToken: String, updatesActor: ActorRef, wo
     case c: SendDocument => sendDocument(c).map { x => callback(x); x }.logoutResult
     case c: SendLocation => sendLocation(c).map { x => callback(x); x }.logoutResult
     case c: SendMessage => sendMessage(c).map { x => callback(x); x }.logoutResult
+    case c: DeleteMessage => deleteMessage(c).map { x => callback(x); x }.logoutResult
     //    case c: SendSticker => sendSticker(c).map { x => callback(x); x }.logoutResult
     //    case c: SendVideo => sendVideo(c).map { x => callback(x); x }.logoutResult
     //    case c: SendVoice => sendVoice(c).map { x => callback(x); x }.logoutResult

@@ -7,7 +7,7 @@ import akka.stream.{ActorMaterializer, Materializer}
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
 import io.github.morgaroth.base.MMarshalling
 import io.github.morgaroth.telegrambot.core.api.models.formats.DI
-import io.github.morgaroth.telegrambot.core.api.models.{File, ForwardMessage, GetFile, GetUserProfilePhotos, Message, SendChatAction, SendDocument, SendLocation, SendMessage, SendPhoto, Update, User, UserProfilePhotos}
+import io.github.morgaroth.telegrambot.core.api.models.{DeleteMessage, File, ForwardMessage, GetFile, GetUserProfilePhotos, Message, SendChatAction, SendDocument, SendLocation, SendMessage, SendPhoto, Update, User, UserProfilePhotos}
 
 trait Methods extends Json4sSupport with MMarshalling {
   implicit def actorSystem: ActorSystem
@@ -39,6 +39,7 @@ trait Methods extends Json4sSupport with MMarshalling {
   lazy val sendChatAction = m1[SendChatAction, Boolean]("sendChatAction")
   lazy val getUserProfilePhotos = m1[GetUserProfilePhotos, UserProfilePhotos]("getUserProfilePhotos")
   lazy val getFile = m1[GetFile, File]("getFile")
+  lazy val deleteMessage = m1[DeleteMessage, Boolean]("deleteMessage")
 
   //  lazy val fetchFile: FileFetch = new FileFetch(botToken)
 }
