@@ -117,6 +117,14 @@ class WorkerBot(cfg: Config) extends MorgarothActor with Stash {
             fMsgId, promptMessage.message_id
           ))
       })
+    case TextCommand("test pass" | "test password", (chat, _, fMsgId)) =>
+      sender() ! SendMapped(chat.msg("Ok, now send me some password"), {
+        case Response(true, Right(promptMessage: Message), _) =>
+          context.become(waitingForReply(
+            pass => (),
+            fMsgId, promptMessage.message_id
+          ))
+      })
 
     case TextCommand("ap on", _) => publish(PowerOn)
     case TextCommand("ap off", _) => publish(PowerOff)

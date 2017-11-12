@@ -58,9 +58,7 @@ object gp extends Selenium {
     var elements: List[String] = null
     do {
       elements = findElements(x"//ul[@data-type='side-menu-month']//li[not(contains(@class, 'green-highlight'))]//a").map(_.getText).filter(_.nonEmpty).map(_.stripPrefix("#"))
-      println(s"elements are $elements")
     } while (elements.contains("Loading...") || elements.isEmpty)
-    println(s"raw scrapped $elements")
     elements.map(_.toInt)
   }
 

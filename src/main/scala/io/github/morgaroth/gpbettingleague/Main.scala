@@ -1,14 +1,11 @@
 package io.github.morgaroth.gpbettingleague
 
-import java.net.URL
-
 import akka.actor.ActorSystem
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 import io.github.morgaroth.base.{MessagesPublisher, UserCredentials}
 import org.joda.time.{DateTime, Days, Minutes}
-import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.remote.{DesiredCapabilities, RemoteWebDriver}
+import org.openqa.selenium.remote.RemoteWebDriver
 import org.openqa.selenium.support.ui.ExpectedConditions
 
 import scala.language.implicitConversions
@@ -55,21 +52,7 @@ class Main(cfg: Config, driver: RemoteWebDriver)(implicit as: ActorSystem) exten
           logger.info(s"      Forecast $forecast")
           val previousSelection = gpMatch.currentResult
           if (previousSelection != forecast) {
-            if (previousSelection != "-:-") {
-              logger.info(s"      Updating from '$previousSelection' to '$forecast'.")
-              gpMatch.currentBetElem.click()
-            }
-            gp.highlight(gpMatch.hostsElem)
-            gpMatch.hostsElem.click()
-            for (_ <- 0 until targetScore._1) {
-              gpMatch.hostsElem.click()
-              Thread.sleep(500)
-            }
-            for (_ <- 0 until targetScore._2) {
-              gpMatch.guestsElem.click()
-              Thread.sleep(500)
-            }
-            publishLog(s"Selection for match ${gpMatch.host}:${gpMatch.guest}: $forecast")
+            makeSelectionForMatch(gpMatch, targetScore)
             1
           } else {
             logger.info(s"      Forecast is the same as previous.")
@@ -90,7 +73,13 @@ class Main(cfg: Config, driver: RemoteWebDriver)(implicit as: ActorSystem) exten
             logger.info(s"\t\t${poss.toString}, $aliases")
           }
           publishLog(s"No match ${gpMatch.host} vs ${gpMatch.guest} at (${gpMatch.start.toString("dd MMM HH:mm")}).")
-          0
+
+          if (daysToStart <= 2) {
+            makeSelectionForMatch(gpMatch, (2, 1), Some("match begins shortly"))
+          } else {
+//            makeSelectionForMatch(gpMatch, (3, 1), Some("match unknown from odds"))
+          }
+          1
         }
       }.sum
       if (changes > 0) {
@@ -105,6 +94,26 @@ class Main(cfg: Config, driver: RemoteWebDriver)(implicit as: ActorSystem) exten
       }
     }
     driver.close()
+  }
+
+  def makeSelectionForMatch(gpMatch: GpMatch, targetScore: (Int, Int), reason: Option[String] = None) = {
+    val previousSelection = gpMatch.currentResult
+    val forecast = s"${targetScore._1}:${targetScore._2}"
+    if (previousSelection != "-:-") {
+      logger.info(s"      Updating from '$previousSelection' to '$forecast'.")
+      gpMatch.currentBetElem.click()
+    }
+    gp.highlight(gpMatch.hostsElem)
+    gpMatch.hostsElem.click()
+    for (_ <- 0 until targetScore._1) {
+      gpMatch.hostsElem.click()
+      Thread.sleep(500)
+    }
+    for (_ <- 0 until targetScore._2) {
+      gpMatch.guestsElem.click()
+      Thread.sleep(500)
+    }
+    publishLog(s"Selection for match ${gpMatch.host}:${gpMatch.guest}: $forecast" + reason.map(x => s"( $x)"))
   }
 
   def oddsToScore(host: Double, guest: Double): (Int, Int) = {
