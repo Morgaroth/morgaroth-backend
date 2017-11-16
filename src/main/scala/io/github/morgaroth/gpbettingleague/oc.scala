@@ -8,6 +8,7 @@ import org.joda.time.{DateTime, DateTimeZone, LocalTime}
 import org.openqa.selenium.{By, Cookie}
 
 import scala.language.{postfixOps, reflectiveCalls}
+import scala.reflect.internal.Trees
 import scala.util.Try
 
 /**
@@ -15,6 +16,7 @@ import scala.util.Try
   */
 object oc extends Selenium {
 
+  case class SeleniumError(doc: String, problem: Throwable) extends Exception
 
   private trait Row
 
@@ -36,37 +38,42 @@ object oc extends Selenium {
       println("Closing popup")
       popup.click()
     }
-    findElements(x"//tr[@class='match-on ' or @class='date first']").view.map { row =>
-      row.getAttribute("class") match {
-        case "date first" =>
-          D(parseDateTime(row.findElement(By.cssSelector("td > p")).getText))
-        case "match-on " =>
-          highlight(row)
-          val hour = row / x"./td[@class='time']//p"
-          val bets = row /+ x"./td[@data-best-odds]" map { cell =>
-            (
-              (cell / x".//span[@class='add-to-bet-basket']").getAttribute("data-name"),
-              cell.getAttribute("data-best-odds")
-            )
-          }
-          if (bets.size != 3) {
-            println(s"WTF invalid amount of bets $bets ${row.getText}")
-            null
-          } else {
-            val (h :: d :: g :: Nil) = bets
-            M(h._1, g._1, (h._2.toDouble, d._2.toDouble, g._2.toDouble), hour.getText)
-          }
-      }
-    }.takeWhile {
-      case D(d) if newerThan.isDefined => newerThan.exists(_.isAfter(d))
-      case _ => true
-    }.filter(_ != null).foldLeft((null, Nil): (DateTime, List[OCMatch])) {
-      case ((null, _), m: M) => throw new IllegalArgumentException(s"invalid data $m")
-      case ((_, acc), D(d)) => (d, acc)
-      case ((d, acc), next: M) =>
-        val start = d.withTime(new LocalTime(next.hour))
-        (d, acc :+ OCMatch(next.host, next.guest, next.odds._1, next.odds._2, next.odds._3, start))
-    }._2
+    try {
+      findElements(x"//tr[@class='match-on ' or @class='date first']").view.map { row =>
+        row.getAttribute("class") match {
+          case "date first" =>
+            D(parseDateTime(row.findElement(By.cssSelector("td > p")).getText))
+          case "match-on " =>
+            highlight(row)
+            val hour = row / x"./td[@class='time']//p"
+            val bets = row /+ x"./td[@data-best-odds]" map { cell =>
+              (
+                (cell / x".//span[@class='add-to-bet-basket']").getAttribute("data-name"),
+                cell.getAttribute("data-best-odds")
+              )
+            }
+            if (bets.size != 3) {
+              println(s"WTF invalid amount of bets $bets ${row.getText}")
+              null
+            } else {
+              val (h :: d :: g :: Nil) = bets
+              M(h._1, g._1, (h._2.toDouble, d._2.toDouble, g._2.toDouble), hour.getText)
+            }
+        }
+      }.takeWhile {
+        case D(d) if newerThan.isDefined => newerThan.exists(_.isAfter(d))
+        case _ => true
+      }.filter(_ != null).foldLeft((null, Nil): (DateTime, List[OCMatch])) {
+        case ((null, _), m: M) => throw new IllegalArgumentException(s"invalid data $m")
+        case ((_, acc), D(d)) => (d, acc)
+        case ((d, acc), next: M) =>
+          val start = d.withTime(new LocalTime(next.hour))
+          (d, acc :+ OCMatch(next.host, next.guest, next.odds._1, next.odds._2, next.odds._3, start))
+      }._2
+    } catch {
+      case t: NoSuchElementException =>
+        throw SeleniumError(driver.getPageSource, t)
+    }
   }
 
   def scrapMatches(newerThan: Option[DateTime])(implicit driver: Driver) = {

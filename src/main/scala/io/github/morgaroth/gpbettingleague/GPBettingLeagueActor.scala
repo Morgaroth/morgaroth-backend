@@ -5,6 +5,7 @@ import java.net.URL
 import akka.actor.Props
 import com.typesafe.config.ConfigFactory
 import io.github.morgaroth.base._
+import io.github.morgaroth.gpbettingleague.oc.SeleniumError
 import net.ceedubs.ficus.Ficus._
 import org.joda.time.DateTime
 import org.openqa.selenium.chrome.ChromeDriver
@@ -33,7 +34,7 @@ class GPBettingLeagueActor(db: BettingDB) extends MorgarothActor {
 
   context.system.scheduler.schedule(2.seconds, 6.hours, self, UpdateClosedRoundsKnowledge)
 
-  def getDriver(): RemoteWebDriver = if (cfg.hasPath("remote-server")) {
+  def getDriver: RemoteWebDriver = if (cfg.hasPath("remote-server")) {
     log.info(s"running with remote server on ${cfg.getString("remote-server")}")
     new RemoteWebDriver(new URL(cfg.getString("remote-server")), DesiredCapabilities.chrome)
   } else {
@@ -61,8 +62,13 @@ class GPBettingLeagueActor(db: BettingDB) extends MorgarothActor {
       creds.foreach { credentials =>
         try {
           withRunner(_.run(credentials, timeBarrier.orElse(Some(DateTime.now.plusDays(14).withTimeAtStartOfDay()))))
-          publishLog("Selections made using previous password.")
+          publishLog(s"Selections made using previous password and time barrier $timeBarrier.")
         } catch {
+          case SeleniumError(page, t)=>
+            log.warning("encountered exception {} ({}) wile running RunGPBettingLeague", t.getMessage, t.getClass.getCanonicalName)
+            t.printStackTrace()
+            publishLog("Error during making selections.")
+            db.saveErrorPage(page, t)
           case t: Throwable =>
             log.warning("encountered exception {} ({}) wile running RunGPBettingLeague", t.getMessage, t.getClass.getCanonicalName)
             t.printStackTrace()
@@ -133,7 +139,7 @@ class GPBettingLeagueActor(db: BettingDB) extends MorgarothActor {
   }
 
   def withRunner[T](fn: Main => T): T = {
-    val driver = getDriver()
+    val driver = getDriver
     val runner = new Main(cfg, driver)
     val result = fn(runner)
     if (result.isInstanceOf[Future[_]]) {

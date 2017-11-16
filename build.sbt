@@ -90,6 +90,7 @@ val root = (project in file("."))
         |import io.github.morgaroth.gpbettingleague.Driver
         |import io.github.morgaroth.base.UserCredentials
         |import org.joda.time.{DateTime, LocalTime}
+        |import akka.actor.ActorSystem
         |
         |import io.github.morgaroth.gpbettingleague._
         |import xpath._
@@ -99,5 +100,7 @@ val root = (project in file("."))
         |
         |val seleniumHelpers = new Selenium {}
         |import seleniumHelpers._
+        |implicit val system = ActorSystem()
+        |def quit = system.terminate()
       """.stripMargin,
   ).settings(DockerConfig.settings: _*)

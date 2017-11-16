@@ -85,7 +85,7 @@ object Universal extends LazyLogging {
 }
 
 
-case class GpMatch(hostsElem: WebElement, guestsElem: WebElement, start: DateTime, currentBetElem: WebElement) {
+case class GpMatch(hostsElem: WebElement, guestsElem: WebElement, start: DateTime, currentBetElem: WebElement, matchId: Int) {
 
   def host: String = hostsElem.getText
 
@@ -107,8 +107,8 @@ case class OCMatch(host: String, guest: String, hostBet: Double, drawBet: Double
 
 }
 
-case class GpRoundResult(place: Int, points: Int, bonus: Int, player: String, roundId: Int){
-  def userResult: String = if(place < Int.MaxValue) place.toString else s"not participated"
+case class GpRoundResult(place: Int, points: Int, bonus: Int, player: String, roundId: Int) {
+  def userResult: String = if (place < Int.MaxValue) place.toString else s"not participated"
 }
 
 object GpRoundResult {
@@ -124,3 +124,22 @@ object Driver {
 
   implicit def unwrap2(wd: Driver): WebDriverWait = wd.wdw
 }
+
+case class RoundInfo(id: Int, month: String, completed: Boolean)
+
+case class RoundsShortResponse(data: List[RoundInfo])
+
+case class MatchBet(score: String, count: Int) {
+  def forecast: (Int, Int) = {
+    val (h :: g :: Nil) = score.split(":").toList.map(_.toInt).take(2)
+    (h, g)
+  }
+}
+
+case class MatchStats(matchId: Int, bets: List[MatchBet]) {
+  def mostPopularBet: Option[MatchBet] = {
+    if (bets.isEmpty) None else bets.groupBy(x => x.count).maxBy(_._1)._2.headOption
+  }
+}
+
+case class RoundMatchesStats(id: Int, matches: List[MatchStats])
