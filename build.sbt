@@ -7,7 +7,7 @@ name := "MorgarothServer"
 
 version := "1.0.1"
 
-scalaVersion := "2.12.3"
+scalaVersion := "2.12.4"
 
 val selenium = "3.3.1"
 val akka = "2.4.17"

@@ -10,44 +10,33 @@ import scala.language.implicitConversions
 import scala.util.Try
 
 object Universal extends LazyLogging {
-  // universal name -> ( GP names, OC names )
 
-  private val originNamesMapping = Try {
-    Source.fromResource("gp_names.csv").getLines().toList.map { line =>
-      line.split(";").toList.filter(_.nonEmpty) match {
-        case "T" :: gpid :: gpName :: otherNames :: Nil =>
-          otherNames.split(",").toList.map(_ -> gpName).toMap
-        case "T" :: _ :: _ :: Nil => // no mapping here
-          Map.empty
-        case other =>
-          logger.warn(s"bad format of line $other")
-          Map.empty
-      }
-    }.foldLeft(Map.empty[String, String]) {
-      case (acc, elem) => acc ++ elem
-    }
-  }.recover {
-    case thr: Throwable =>
-      logger.error(s"error during loading original mapping file $thr")
-      Map.empty
-  }.get
-
-  // GP name -> other names
+  // my custom name -> other names
   private val data = Map(
     "Ajax Amsterdam" -> List("Ajax"),
+    "Ankaraspor" -> List("Osmanlispor FK"),
     "AS Roma" -> List("Roma"),
     "Atletico Madrid" -> List("Atlético Madrid", "Atletico de Madrid"),
     "Austria Wien" -> List("Austria Wien", "Austria Vienna"),
     "Bastia" -> List("SC Bastia"),
     "Betis" -> List("Real Betis"),
     "Bournemouth" -> List("AFC Bournemouth"),
+    "Borussia Moenchengladbach" -> List("Borussia Monchengladbach"),
+    "Brighton" -> List("Brighton & Hove Albion"),
+    "Chievo" -> List("ChievoVerona"),
     "Cracovia" -> List("Cracovia Krakow"),
+    "Crvena Zvezda" -> List("FK Crvena Zvezda"),
+    "Dynamo Kiev" -> List("Dynamo Kyiv"),
+    "FC Copenhagen" -> List("FC Koebenhavn"),
+    "FC Zurich" -> List("FC Zuerich"),
     "Genk" -> List("Racing Genk"),
     "Gijon" -> List("Sporting Gijon"),
     "Hamburg" -> List("Hamburger SV"),
     "Hannover 96" -> List("Hannover 0.0", "Hannover"),
+    "Huddersfield" -> List("Huddersfield Town"),
     "Hull" -> List("Hull City"),
     "Inter Milan" -> List("Inter"),
+    "Ireland" -> List("Ireland Rep"),
     "Kolonia" -> List("FC Cologne", "FC Koln"),
     "Leicester" -> List("Leicester City"),
     "Legia Warszawa" -> List("Legia Warsaw"),
@@ -57,27 +46,34 @@ object Universal extends LazyLogging {
     "Mainz" -> List("FSV Mainz 05", "Mainz 05"),
     "Man City" -> List("Manchester City"),
     "Man Utd" -> List("Manchester United"),
+    "Napoli" -> List("SSC Napoli"),
     "Newcastle United" -> List("Newcastle"),
-    "Northern Ireland" -> List("North. Ireland"),
+    "Northern Ireland" -> List("North. Ireland", "N.Ireland"),
     "Olympiacos" -> List("Olympiakos"),
     "Paris St Germain" -> List("Paris Saint Germain", "Paris St Germain", "Paris Saint-Germain"),
-    "Real Betis" -> List("Real Betis", "Betis"),
+    "Porto" -> List("FC Porto"),
+    "Racing Genk" -> List("Genk"),
+    "RB Leipzig" -> List("RasenBallsport Leipzig"),
+    "Real Betis" -> List("Betis"),
     "Republic of Ireland" -> List("Ireland Rep", "Republic of Ireland"),
     "Saint-Etienne" -> List("St Etienne"),
     "SPAL 2013" -> List("Spal"),
     "Stoke" -> List("Stoke City"),
+    "Sporting Braga" -> List("Braga"),
     "Sporting CP" -> List("Sporting Lisbon"),
+    "Steaua Bucarest" -> List("Steaua Bucuresti","FC FCSB"),
     "Swansea" -> List("Swansea City"),
     "Termalica Nieciecza" -> List("Termalica BB Nieciecza", "Termalica Bruk-Bet Nieciecza", "Termalica Bruk Bet Nieciecza"),
     "Tottenham Hotspur" -> List("Tottenham"),
     "West Ham" -> List("West Ham United"),
     "West Brom" -> List("West Bromwich Albion"),
-    "Vitoria de Guimaraes" -> List("Vitoria Guimaraes"),
+    "Vardar Skopje" -> List("FK Vardar Skopje"),
     "Verona" -> List("Hellas Verona"),
+    "Vitoria de Guimaraes" -> List("Vitoria Guimaraes"),
     "Zulte-Waregem" -> List("Zulte Waregem"),
   )
 
-  private val toUni = data.flatMap(x => x._2.map(_ -> x._1)) ++ originNamesMapping
+  private val toUni = data.flatMap(x => x._2.map(_ -> x._1))
 
   def gpUid(m: GpMatch) = s"${toUni.getOrElse(m.host, m.host)}:${toUni.getOrElse(m.guest, m.guest)}"
 

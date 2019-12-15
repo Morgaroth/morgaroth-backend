@@ -32,7 +32,7 @@ object oc extends Selenium {
   def parseDateTime(dateStr: String) =
     DateTime.parse(normalizeDateString(dateStr), dateParser).withZoneRetainFields(DateTimeZone.UTC)
 
-  private def performScrapFor(link: String, newerThan: Option[DateTime])(implicit driver: Driver): List[OCMatch] = {
+  def performScrapFor(link: String, newerThan: Option[DateTime])(implicit driver: Driver): List[OCMatch] = {
     go to link
     Try(findElement(x"//div[@id='promo-modal']//span[@class='inside-close-button']")).foreach { popup =>
       println("Closing popup")
@@ -45,19 +45,35 @@ object oc extends Selenium {
             D(parseDateTime(row.findElement(By.cssSelector("td > p")).getText))
           case "match-on " =>
             highlight(row)
-            val hour = row / x"./td[@class='time']//p"
-            val bets = row /+ x"./td[@data-best-odds]" map { cell =>
-              (
-                (cell / x".//span[@class='add-to-bet-basket']").getAttribute("data-name"),
-                cell.getAttribute("data-best-odds")
-              )
+            // AB tests...
+            val hour = row / x"./td[@class='time']/div/span"
+            val (teams, bets) = try {
+              // A:
+              val teams1 = row /+ x".//span[@class='fixtures-bet-name']" map {
+                _.getText
+              } filter (_ != "Draw")
+              val bets1 = row /+ x"./td[@data-best-odds]" map {
+                _.getAttribute("data-best-odds")
+              }
+              println("A version")
+              teams1(1)
+              bets1(2)
+              (teams1, bets1)
+            } catch {
+              case _: Throwable =>
+                // B:
+                val teams2 = row /+ x".//p[contains(@class, 'fixtures-bet-name')]" map {
+                  _.getText
+                }
+                val bets2 = row /+ x"./td[@data-best-odds]" map { cell => cell.getAttribute("data-best-odds") }
+                println("B version")
+                (teams2, bets2)
             }
-            if (bets.size != 3) {
-              println(s"WTF invalid amount of bets $bets ${row.getText}")
+            if (bets.lengthCompare(3) != 0 || teams.lengthCompare(2) != 0) {
+              println(s"WTF invalid amount of bets $bets or teams $teams | ${row.getText}")
               null
             } else {
-              val (h :: d :: g :: Nil) = bets
-              M(h._1, g._1, (h._2.toDouble, d._2.toDouble, g._2.toDouble), hour.getText)
+              M(teams.head, teams(1), (bets.head.toDouble, bets(1).toDouble, bets(2).toDouble), hour.getText)
             }
         }
       }.takeWhile {
@@ -81,11 +97,17 @@ object oc extends Selenium {
     driver.manage().addCookie(new Cookie.Builder("hideCountryBanner", "true").domain(".oddschecker.com").build())
     driver.manage().addCookie(new Cookie.Builder("cookiePolicy", "true").domain(".oddschecker.com").build())
     List(
-      performScrapFor("https://www.oddschecker.com/football/elite-coupon", newerThan),
-      performScrapFor("https://www.oddschecker.com/football/other/poland/ekstraklasa", newerThan),
-      performScrapFor("https://www.oddschecker.com/football/world-cup", newerThan),
-      performScrapFor("https://www.oddschecker.com/football/italy/serie-a", newerThan),
-      performScrapFor("https://www.oddschecker.com/football/international-friendlies", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/english/premier-league#winner", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/champions-league#winner", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/italy/serie-a#winner", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/italy/serie-b#winner", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/italy/coppa-italia#winner", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/france/ligue-1#winner", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/spain/la-liga-primera", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/english/premier-league", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/germany/bundesliga", newerThan),
+      performScrapFor("https://www.oddschecker.com/football/poland/ekstraklasa", newerThan),
+      //      performScrapFor("", newerThan),
     ).flatten
   }
 

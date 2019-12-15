@@ -6,7 +6,7 @@ import javax.imageio.ImageIO
 
 import io.github.morgaroth.gpbettingleague.xpath._
 import org.joda.time.DateTime
-import org.openqa.selenium.{By, WebElement}
+import org.openqa.selenium.{By, JavascriptExecutor, WebElement}
 import ru.yandex.qatools.ashot.AShot
 import ru.yandex.qatools.ashot.coordinates.WebDriverCoordsProvider
 import ru.yandex.qatools.ashot.shooting.ShootingStrategies
@@ -20,7 +20,12 @@ trait Selenium {
 
   object go {
     def to(url: String)(implicit webDriver: Driver): Unit = {
-      webDriver.navigate.to(url)
+      val parts = url.split("#")
+      println(parts.toList)
+      webDriver.navigate.to(parts(0))
+      if (parts.length == 2) {
+        webDriver.wd.asInstanceOf[JavascriptExecutor].executeScript(s"window.location.hash='#${parts(1)}'")
+      }
     }
   }
 
